@@ -1,0 +1,51 @@
+name: rawdah
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.3+1 # تم تحديثه ليتوافق مع النسخة المطلوبة في الكود
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  share_plus: ^12.0.1
+  path_provider: ^2.1.5
+  audioplayers: ^6.5.1
+  speech_to_text: ^7.3.0
+  shared_preferences: ^2.5.4
+  url_launcher: ^6.3.2
+  flutter_native_splash: ^2.4.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1 # يجب أن يكون بمحاذاة flutter_test
+
+# إعدادات الأيقونة (خارج dev_dependencies وبدون مسافات بادئة)
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/img.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FCF9F2"
+  adaptive_icon_foreground: "assets/images/img.png"
+
+# إعدادات شاشة البدء لإلغاء الشاشة البيضاء
+flutter_native_splash:
+  color: "#FCF9F2"
+  image: "assets/images/img.png"
+  android_12:
+    image: "assets/images/img.png"
+    color: "#FCF9F2"
+  fullscreen: true
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/sounds/
+    - assets/background/
