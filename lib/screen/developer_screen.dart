@@ -13,7 +13,6 @@ class DeveloperScreen extends StatelessWidget {
       }
     } catch (e) {
       ErrorHandler.logError("URL launch error: $e", StackTrace.current);
-      // يمكن إضافة رسالة خطأ للمستخدم هنا
     }
   }
 
@@ -53,7 +52,7 @@ class DeveloperScreen extends StatelessWidget {
               Icons.email,
               'إيميل',
               'للاقتراحات التقنية',
-                  () => _launchURL("mailto:developer@example.com"),
+                  () => _launchURL("mailto:telfaw@gmail.com"), // التعديل هنا
               Colors.blue,
             ),
             _buildContactOption(
@@ -70,6 +69,7 @@ class DeveloperScreen extends StatelessWidget {
     );
   }
 
+  // بقية الـ Widgets (تظل كما هي في كودك الأصلي)
   Widget _buildContactOption(BuildContext context, IconData icon, String title,
       String subtitle, VoidCallback onTap, Color color) {
     return Card(
@@ -130,8 +130,6 @@ class DeveloperScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-
-              // صورة المطور مع تأثير متقدم
               Center(
                 child: Container(
                   decoration: BoxDecoration(
@@ -157,8 +155,6 @@ class DeveloperScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // الاسم
               const Text(
                 "فواز الشميري",
                 style: TextStyle(
@@ -177,8 +173,6 @@ class DeveloperScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // الوصف
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Text(
@@ -193,13 +187,7 @@ class DeveloperScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // المهارات
-            //  _buildSkillsSection(isDark),
-
               const Divider(indent: 50, endIndent: 50, thickness: 0.5),
-
-              // التواصل
               const Text(
                 "تواصل معي للمقترحات والدعم الفني",
                 style: TextStyle(
@@ -209,8 +197,6 @@ class DeveloperScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 15),
-
-              // خيارات التواصل المدمجة
               _buildContactCard(
                 icon: Icons.chat_outlined,
                 label: "تواصل عبر واتساب",
@@ -219,10 +205,7 @@ class DeveloperScreen extends StatelessWidget {
                 onTap: () => _showContactOptions(context),
               ),
               const SizedBox(height: 10),
-
-              // معلومات إضافية
               _buildAdditionalInfo(isDark),
-
               const SizedBox(height: 40),
             ],
           ),
@@ -231,102 +214,7 @@ class DeveloperScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSkillsSection(bool isDark) {
-    final skills = [
-      {'skill': 'Flutter', 'level': 0.9},
-      {'skill': 'Dart', 'level': 0.85},
-      {'skill': 'Firebase', 'level': 0.8},
-      {'skill': 'API Integration', 'level': 0.85},
-      {'skill': 'UI/UX Design', 'level': 0.75},
-      {'skill': 'Problem Solving', 'level': 0.9},
-    ];
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.code, color: Color(0xFFD4AF37), size: 24),
-              SizedBox(width: 10),
-              Text(
-                "المهارات والخبرات",
-                style: TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFD4AF37),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          ...skills.map((skill) => _buildSkillItem(
-            skill['skill'] as String,
-            skill['level'] as double,
-            isDark,
-          )).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSkillItem(String skill, double level, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                skill,
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${(level * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 11,
-                  color: isDark ? Colors.white54 : Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(5),
-            child: LinearProgressIndicator(
-              value: level,
-              backgroundColor: isDark ? Colors.white12 : Colors.black12,
-              color: const Color(0xFFD4AF37),
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // بقية الميثودز المساعدة تظل كما هي...
   Widget _buildContactCard({
     required IconData icon,
     required String label,

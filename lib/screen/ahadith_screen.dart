@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rawdah/error_handler.dart';
 
+// كلاس الرسم يظل كما هو
 class IslamicPatternPainter extends CustomPainter {
   final Color color;
   IslamicPatternPainter({required this.color});
@@ -34,10 +35,16 @@ class IslamicPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class AhadithScreen extends StatelessWidget {
+class AhadithScreen extends StatefulWidget { // تحويل إلى StatefulWidget
   const AhadithScreen({super.key});
 
-  final List<Map<String, String>> ahadith = const [
+  @override
+  State<AhadithScreen> createState() => _AhadithScreenState();
+}
+
+class _AhadithScreenState extends State<AhadithScreen> {
+  // القائمة الأصلية
+  final List<Map<String, String>> allAhadith = const [
     {
       "title": "فضل البدء ببسم الله",
       "text": "«كُلُّ أَمْرٍ ذِي بَالٍ لا يُبْدَأُ فِيهِ بِبِسْمِ اللَّهِ فَهُوَ أَقْطَعُ»",
@@ -88,6 +95,46 @@ class AhadithScreen extends StatelessWidget {
     },
   ];
 
+  // قائمة النتائج المفلترة
+  List<Map<String, String>> filteredAhadith = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    filteredAhadith = allAhadith; // في البداية نعرض كل الأحاديث
+  }
+
+  // دالة البحث الذكي
+  void _runFilter(String enteredKeyword) {
+    List<Map<String, String>> results = [];
+    if (enteredKeyword.isEmpty) {
+      results = allAhadith;
+    } else {
+      results = allAhadith.where((hadith) {
+        final title = hadith["title"]!.toLowerCase();
+        final text = hadith["text"]!.toLowerCase();
+        final ref = hadith["ref"]!.toLowerCase();
+        final searchLower = enteredKeyword.toLowerCase();
+
+        // البحث في العنوان أو النص أو المرجع
+        return title.contains(searchLower) ||
+            text.contains(searchLower) ||
+            ref.contains(searchLower);
+      }).toList();
+    }
+
+    setState(() {
+      filteredAhadith = results;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _showHadithDetails(BuildContext context, Map<String, String> hadith, bool isDark) {
     try {
       showModalBottomSheet(
@@ -101,31 +148,16 @@ class AhadithScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // العنوان
                   Text(
                     hadith['title']!,
-                    style: const TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFD4AF37),
-                    ),
+                    style: const TextStyle(fontFamily: 'Amiri', fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFD4AF37)),
                   ),
                   const Divider(height: 30, color: Color(0xFFD4AF37)),
-
-                  // نص الحديث
                   Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -136,67 +168,17 @@ class AhadithScreen extends StatelessWidget {
                     child: Text(
                       hadith['text']!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 18,
-                        height: 1.8,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontFamily: 'Amiri', fontSize: 18, height: 1.8, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // المصدر
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "📖 ${hadith['ref']!}",
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // الشرح
-                  Text(
-                    hadith['explanation']!,
-                    textAlign: TextAlign.justify,
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      height: 1.6,
-                    ),
-                  ),
+                  Text(hadith['explanation']!, textAlign: TextAlign.justify, style: const TextStyle(fontFamily: 'Cairo', fontSize: 16, height: 1.6)),
                   const SizedBox(height: 30),
-
-                  // زر الإغلاق
-                  ElevatedButton.icon(
+                  ElevatedButton(
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD4AF37),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    ),
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    label: const Text(
-                      "إغلاق",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Cairo',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37)),
+                    child: const Text("إغلاق", style: TextStyle(color: Colors.white, fontFamily: 'Cairo')),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -204,8 +186,7 @@ class AhadithScreen extends StatelessWidget {
         ),
       );
     } catch (e) {
-      ErrorHandler.logError("Error showing hadith details: $e", StackTrace.current);
-      ErrorHandler.showError(context, 'حدث خطأ في عرض تفاصيل الحديث');
+      ErrorHandler.logError("Error: $e", StackTrace.current);
     }
   }
 
@@ -217,77 +198,65 @@ class AhadithScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // الخلفية الإسلامية
-          Positioned.fill(
-            child: CustomPaint(
-              painter: IslamicPatternPainter(color: patternColor),
-            ),
-          ),
-
-          // قائمة الأحاديث
+          Positioned.fill(child: CustomPaint(painter: IslamicPatternPainter(color: patternColor))),
           SafeArea(
             child: Column(
               children: [
-                // شريط البحث المدمج
+                // شريط البحث المطور
                 Container(
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF2D1B10) : Colors.white,
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.3)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
                   ),
                   child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'ابحث عن حديث...',
-                      hintStyle: TextStyle(fontFamily: 'Cairo'),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFFD4AF37)),
+                    controller: _searchController,
+                    onChanged: (value) => _runFilter(value), // استدعاء الفلترة عند كل حرف
+                    decoration: InputDecoration(
+                      hintText: 'ابحث عن حديث أو عنوان أو مصدر...',
+                      hintStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFFD4AF37)),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                          _runFilter('');
+                        },
+                      )
+                          : null,
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
-                    style: const TextStyle(fontFamily: 'Cairo'),
-                    onChanged: (value) {
-                      // يمكن إضافة وظيفة البحث لاحقاً
-                    },
                   ),
                 ),
 
-                // عدد الأحاديث
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.menu_book, color: Color(0xFFD4AF37), size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'عدد الأحاديث: ${ahadith.length}',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 14,
-                          color: isDark ? Colors.white70 : Colors.black54,
-                        ),
+                // حالة عدم وجود نتائج
+                if (filteredAhadith.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 80, color: Colors.grey.withOpacity(0.5)),
+                          const SizedBox(height: 10),
+                          const Text("عذراً، لا توجد نتائج للبحث", style: TextStyle(fontFamily: 'Cairo', color: Colors.grey)),
+                        ],
                       ),
-                    ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+                      itemCount: filteredAhadith.length,
+                      itemBuilder: (context, index) {
+                        return _buildHadithCard(context, filteredAhadith[index], isDark, index);
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-
-                // قائمة الأحاديث
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-                    itemCount: ahadith.length,
-                    itemBuilder: (context, index) {
-                      return _buildHadithCard(context, ahadith[index], isDark, index);
-                    },
-                  ),
-                ),
               ],
             ),
           ),
@@ -296,6 +265,7 @@ class AhadithScreen extends StatelessWidget {
     );
   }
 
+  // ويدجت الكارت (نفس الكود السابق مع استخدام القائمة المفلترة)
   Widget _buildHadithCard(BuildContext context, Map<String, String> hadith, bool isDark, int index) {
     return GestureDetector(
       onTap: () => _showHadithDetails(context, hadith, isDark),
@@ -305,105 +275,31 @@ class AhadithScreen extends StatelessWidget {
           color: isDark ? const Color(0xFF2D1B10) : Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.4)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // رقم الحديث والعنوان
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${index + 1}',
-                      style: const TextStyle(
-                        color: Color(0xFFD4AF37),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  CircleAvatar(
+                    radius: 15,
+                    backgroundColor: const Color(0xFFD4AF37).withOpacity(0.1),
+                    child: Text('${index + 1}', style: const TextStyle(color: Color(0xFFD4AF37), fontSize: 12)),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      hadith['title']!,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
-                        color: Color(0xFFD4AF37),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: Text(hadith['title']!, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: Color(0xFFD4AF37), fontWeight: FontWeight.bold))),
                 ],
               ),
               const SizedBox(height: 12),
-
-              // نص الحديث
-              Text(
-                hadith['text']!,
-                style: TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 17,
-                  height: 1.6,
-                  color: isDark ? const Color(0xFFE6D5B8) : const Color(0xFF3E2723),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Divider(height: 25, thickness: 0.5),
-
-              // المصدر والزر
+              Text(hadith['text']!, style: TextStyle(fontFamily: 'Amiri', fontSize: 17, color: isDark ? const Color(0xFFE6D5B8) : const Color(0xFF3E2723), fontWeight: FontWeight.bold)),
+              const Divider(height: 25),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.source, size: 14, color: Colors.grey),
-                      const SizedBox(width: 5),
-                      Text(
-                        "المصدر: ${hadith['ref']!}",
-                        style: const TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 11,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "اضغط للشرح",
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 11,
-                            color: Color(0xFFD4AF37),
-                          ),
-                        ),
-                        SizedBox(width: 5),
-                        Icon(Icons.touch_app, size: 14, color: Color(0xFFD4AF37)),
-                      ],
-                    ),
-                  ),
+                  Text("المصدر: ${hadith['ref']!}", style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.grey)),
+                  const Icon(Icons.touch_app, size: 16, color: Color(0xFFD4AF37)),
                 ],
               ),
             ],

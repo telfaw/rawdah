@@ -373,7 +373,7 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
                   ),
                 ),
                 child: const Text(
-                  'فهمت',
+                  '',
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Cairo',
