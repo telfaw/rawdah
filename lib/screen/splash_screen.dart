@@ -18,7 +18,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final String serverRequiredVersion = "1.0.4";
+  final String serverRequiredVersion = "1.0.5";
   final List<String> _spiritualMessages = [
     "استغل وقتك بذكر الله",
     "صلِّ على النبي ﷺ تفرج همومك",

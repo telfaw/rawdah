@@ -38,7 +38,7 @@ class RawdahApp extends StatefulWidget {
 
 class _RawdahAppState extends State<RawdahApp> {
   ThemeMode _themeMode = ThemeMode.light;
-  final String appVersion = "1.0.4";
+  final String appVersion = "1.0.5";
 
   // دالة تحويل الوضع اللوني
   void _toggleTheme() {
