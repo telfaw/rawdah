@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../utils/effects.dart';
 
 class DeveloperScreen extends StatelessWidget {
   const DeveloperScreen({super.key});
@@ -44,7 +47,7 @@ class DeveloperScreen extends StatelessWidget {
               Icons.chat,
               'واتساب',
               'تواصل سريع',
-                  () => _launchURL("https://wa.me/967777004173"),
+              () => _launchURL("https://wa.me/967777004173"),
               Colors.green,
             ),
             _buildContactOption(
@@ -52,7 +55,7 @@ class DeveloperScreen extends StatelessWidget {
               Icons.email,
               'إيميل',
               'للاقتراحات التقنية',
-                  () => _launchURL("mailto:telfaw@gmail.com"), // التعديل هنا
+              () => _launchURL("mailto:fzfludev@gmail.com"),
               Colors.blue,
             ),
             _buildContactOption(
@@ -60,7 +63,7 @@ class DeveloperScreen extends StatelessWidget {
               Icons.phone,
               'اتصال',
               'للدعم الفني',
-                  () => _launchURL("tel:967777004173"),
+              () => _launchURL("tel:967777004173"),
               const Color(0xFFD4AF37),
             ),
           ],
@@ -69,21 +72,24 @@ class DeveloperScreen extends StatelessWidget {
     );
   }
 
-  // بقية الـ Widgets (تظل كما هي في كودك الأصلي)
-  Widget _buildContactOption(BuildContext context, IconData icon, String title,
-      String subtitle, VoidCallback onTap, Color color) {
+  Widget _buildContactOption(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+    Color color,
+  ) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 24),
@@ -97,12 +103,13 @@ class DeveloperScreen extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 12,
-          ),
+          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
         ),
-        trailing: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.grey),
+        trailing: const Icon(
+          Icons.arrow_back_ios_new,
+          size: 16,
+          color: Colors.grey,
+        ),
       ),
     );
   }
@@ -115,106 +122,117 @@ class DeveloperScreen extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFFCF9F2),
+        backgroundColor: isDark
+            ? const Color(0xFF0D0D0D)
+            : const Color(0xFFFCF9F2),
         appBar: AppBar(
-          title: const Text(
-            "عن المطور",
-            style: TextStyle(fontFamily: 'Amiri'),
+          title: const ShineEffect(
+            child: Text("عن المطور", style: TextStyle(fontFamily: 'Amiri')),
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFF5D4037),
+          backgroundColor: isDark
+              ? const Color(0xFF1A1A1A)
+              : const Color(0xFF5D4037),
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: primaryGold, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryGold.withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? AppConstants.darkBackgroundGradient
+                : AppConstants.lightBackgroundGradient,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                Center(
+                  child: ShineEffect(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: primaryGold, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryGold.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.transparent,
-                    child: Icon(
-                      Icons.person_pin,
-                      size: 90,
-                      color: primaryGold.withOpacity(0.8),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.transparent,
+                        child: Icon(
+                          Icons.person_pin,
+                          size: 90,
+                          color: primaryGold.withValues(alpha: 0.8),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "فواز الشميري",
-                style: TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: primaryGold,
+                const SizedBox(height: 20),
+                const Text(
+                  "فواز الشميري",
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: primaryGold,
+                  ),
                 ),
-              ),
-              Text(
-                "متخصص تقنية معلومات",
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 16,
-                  color: isDark ? Colors.white54 : Colors.grey,
+                Text(
+                  "متخصص تقنية معلومات",
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 16,
+                    color: isDark ? Colors.white54 : Colors.grey,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  "خبير في برمجة تطبيقات الهواتف الذكية والأنظمة البرمجية، أسعى لتوظيف التكنولوجيا الحديثة في خدمة المحتوى الإسلامي والحلول الخدمية المبتكرة.",
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Text(
+                    "خبير في برمجة تطبيقات الهواتف الذكية والأنظمة البرمجية، أسعى لتوظيف التكنولوجيا الحديثة في خدمة المحتوى الإسلامي والحلول الخدمية المبتكرة.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      height: 1.6,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(indent: 50, endIndent: 50, thickness: 0.5),
+                const Text(
+                  "تواصل معي للمقترحات والدعم الفني",
                   style: TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 14,
-                    height: 1.6,
-                    color: isDark ? Colors.white70 : Colors.black87,
+                    color: primaryGold,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Divider(indent: 50, endIndent: 50, thickness: 0.5),
-              const Text(
-                "تواصل معي للمقترحات والدعم الفني",
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 14,
-                  color: primaryGold,
+                const SizedBox(height: 15),
+                _buildContactCard(
+                  icon: Icons.chat_outlined,
+                  label: "تواصل عبر واتساب",
+                  value: "إرسال رسالة مباشرة",
+                  color: Colors.green,
+                  onTap: () => _showContactOptions(context),
                 ),
-              ),
-              const SizedBox(height: 15),
-              _buildContactCard(
-                icon: Icons.chat_outlined,
-                label: "تواصل عبر واتساب",
-                value: "إرسال رسالة مباشرة",
-                color: Colors.green,
-                onTap: () => _showContactOptions(context),
-              ),
-              const SizedBox(height: 10),
-              _buildAdditionalInfo(isDark),
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 10),
+                _buildAdditionalInfo(isDark),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // بقية الميثودز المساعدة تظل كما هي...
   Widget _buildContactCard({
     required IconData icon,
     required String label,
@@ -229,21 +247,24 @@ class DeveloperScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
           ],
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 8,
+          ),
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -264,7 +285,11 @@ class DeveloperScreen extends StatelessWidget {
               color: Colors.grey,
             ),
           ),
-          trailing: const Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.grey),
+          trailing: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 14,
+            color: Colors.grey,
+          ),
         ),
       ),
     );
@@ -277,7 +302,9 @@ class DeveloperScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF7F3E9),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.2)),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+        ),
       ),
       child: Column(
         children: [
@@ -327,7 +354,7 @@ class DeveloperScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFD4AF37).withOpacity(0.1),
+        color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

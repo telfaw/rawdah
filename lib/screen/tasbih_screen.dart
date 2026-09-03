@@ -1,40 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
+import 'package:rawdah/utils/effects.dart';
+import 'package:rawdah/utils/painters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class IslamicPatternPainter extends CustomPainter {
-  final Color color;
-  IslamicPatternPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    double step = 60.0;
-    for (double i = 0; i < size.width; i += step) {
-      for (double j = 0; j < size.height; j += step) {
-        Path path = Path();
-        path.moveTo(i + step / 2, j);
-        path.lineTo(i + step * 0.7, j + step * 0.3);
-        path.lineTo(i + step, j + step / 2);
-        path.lineTo(i + step * 0.7, j + step * 0.7);
-        path.lineTo(i + step / 2, j + step);
-        path.lineTo(i + step * 0.3, j + step * 0.7);
-        path.lineTo(i, j + step / 2);
-        path.lineTo(i + step * 0.3, j + step * 0.3);
-        path.close();
-        canvas.drawPath(path, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
@@ -43,34 +13,48 @@ class TasbihScreen extends StatefulWidget {
   State<TasbihScreen> createState() => _TasbihScreenState();
 }
 
-class _TasbihScreenState extends State<TasbihScreen> {
+class _TasbihScreenState extends State<TasbihScreen>
+    with SingleTickerProviderStateMixin {
   final List<Map<String, dynamic>> _azkarData = [
-    {"title": "سُبْحَانَ اللَّهِ", "target": 33},
-    {"title": "الْحَمْدُ لِلَّهِ", "target": 33},
-    {"title": "اللَّهُ أَكْبَرُ", "target": 33},
-    {"title": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", "target": 100},
-    {"title": "أَسْتَغْفِرُ اللَّهَ", "target": 100},
-    {"title": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ", "target": 100},
+    {'title': 'سُبْحَانَ اللَّهِ', 'target': 33},
+    {'title': 'الْحَمْدُ لِلَّهِ', 'target': 33},
+    {'title': 'اللَّهُ أَكْبَرُ', 'target': 33},
+    {'title': 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', 'target': 100},
+    {'title': 'أَسْتَغْفِرُ اللَّهَ', 'target': 100},
+    {'title': 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ', 'target': 100},
   ];
 
-  Map<String, int> _remainingCounts = {};
+  late final Map<String, int> _remainingCounts = {};
   int _activeIndex = 0;
   int _completedToday = 0;
   double _numberScale = 1.0;
-  late PageController _pageController;
-  bool _isProcessing = false; // حماية من الضغط المتكرر
-  DateTime? _lastTapTime; // لتتبع وقت آخر ضغطة
+  late final PageController _pageController;
+  late final AnimationController _pulseController;
+  bool _isProcessing = false;
+  DateTime? _lastTapTime;
+
+  static const Color _gold = Color(0xFFD4AF37);
+  static const Color _darkBackground = Color(0xFF17100C);
+  static const Color _lightBackground = Color(0xFFF7F3E9);
+  static const Color _success = Color(0xFF3E9B61);
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 0.7, initialPage: 0);
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+      lowerBound: 0.96,
+      upperBound: 1.0,
+    )..repeat(reverse: true);
     _loadProgress();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -78,35 +62,35 @@ class _TasbihScreenState extends State<TasbihScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String today = DateTime.now().toIso8601String().split('T')[0];
-      final String? lastSavedDate = prefs.getString("last_date");
+      final String? lastSavedDate = prefs.getString('last_date');
 
       if (lastSavedDate != today) {
-        for (var item in _azkarData) {
-          await prefs.remove("${item['title']}_rem");
+        for (final item in _azkarData) {
+          await prefs.remove('${item['title']}_rem');
         }
-        await prefs.setString("last_date", today);
+        await prefs.setString('last_date', today);
       }
 
       int completed = 0;
-      for (var item in _azkarData) {
-        int rem = prefs.getInt("${item['title']}_rem") ?? item['target'];
-        _remainingCounts[item['title']] = rem;
-        if (rem == 0) completed++;
+      for (final item in _azkarData) {
+        final int target = item['target'];
+        final int remaining = prefs.getInt('${item['title']}_rem') ?? target;
+        _remainingCounts[item['title']] = remaining;
+        if (remaining == 0) completed++;
       }
 
-      if (mounted) {
-        setState(() => _completedToday = completed);
-      }
+      if (mounted) setState(() => _completedToday = completed);
     } catch (e) {
-      ErrorHandler.logError("Error loading progress: $e", StackTrace.current);
+      ErrorHandler.logError('Progress load error: $e', StackTrace.current);
     }
   }
 
   Future<void> _handleTap() async {
-    // حماية من الضغط المتكرر السريع
     final now = DateTime.now();
     if (_isProcessing ||
-        (_lastTapTime != null && now.difference(_lastTapTime!) < const Duration(milliseconds: 200))) {
+        (_lastTapTime != null &&
+            now.difference(_lastTapTime!) <
+                const Duration(milliseconds: 150))) {
       return;
     }
 
@@ -114,26 +98,28 @@ class _TasbihScreenState extends State<TasbihScreen> {
     _lastTapTime = now;
 
     try {
-      String currentZikr = _azkarData[_activeIndex]['title'];
-      int currentRem = _remainingCounts[currentZikr] ?? _azkarData[_activeIndex]['target'];
+      final String zikr = _azkarData[_activeIndex]['title'];
+      final int currentRem =
+          _remainingCounts[zikr] ?? _azkarData[_activeIndex]['target'];
 
       if (currentRem > 0) {
-        int nextCount = currentRem - 1;
+        final int nextCount = currentRem - 1;
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('${zikr}_rem', nextCount);
 
         setState(() {
-          _remainingCounts[currentZikr] = nextCount;
-          _numberScale = 1.2;
-          prefs.setInt("${currentZikr}_rem", nextCount);
+          _remainingCounts[zikr] = nextCount;
+          _numberScale = 1.15;
         });
 
-        // تأثير اهتزاز خفيف
         HapticFeedback.selectionClick();
 
         if (nextCount == 0) {
           setState(() => _completedToday++);
           HapticFeedback.vibrate();
-          ErrorHandler.showSuccess(context, 'تم إكمال ${currentZikr}');
+          if (mounted) {
+            ErrorHandler.showSuccess(context, 'تم إكمال $zikr');
+          }
           _moveToNextIncomplete();
         }
 
@@ -144,32 +130,25 @@ class _TasbihScreenState extends State<TasbihScreen> {
       } else {
         _moveToNextIncomplete();
       }
-    } catch (e) {
-      ErrorHandler.logError("Error in handleTap: $e", StackTrace.current);
     } finally {
       _isProcessing = false;
     }
   }
 
   void _moveToNextIncomplete() {
-    int nextIncompleteIndex = -1;
-
+    int nextIdx = -1;
     for (int i = 1; i <= _azkarData.length; i++) {
-      int checkIndex = (_activeIndex + i) % _azkarData.length;
-      String title = _azkarData[checkIndex]['title'];
-      int rem = _remainingCounts[title] ?? _azkarData[checkIndex]['target'];
-
-      if (rem > 0) {
-        nextIncompleteIndex = checkIndex;
+      int checkIdx = (_activeIndex + i) % _azkarData.length;
+      if ((_remainingCounts[_azkarData[checkIdx]['title']] ?? 1) > 0) {
+        nextIdx = checkIdx;
         break;
       }
     }
-
-    if (nextIncompleteIndex != -1) {
+    if (nextIdx != -1) {
       _pageController.animateToPage(
-        nextIncompleteIndex,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
+        nextIdx,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
       );
     } else {
       _showCompletionDialog();
@@ -177,124 +156,27 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   void _showCompletionDialog() {
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            "تقبل الله منك",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold),
-          ),
-          content: const Text(
-            "لقد أتممت جميع أذكار اليوم بنجاح!",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: 'Cairo'),
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4AF37),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  "الحمد لله",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Cairo',
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            )
-          ],
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'تقبل الله منك',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold),
         ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    Color scaffoldBg = isDark ? const Color(0xFF1A130F) : const Color(0xFFF7F3E9);
-    Color textColor = isDark ? const Color(0xFFE6D5B8) : const Color(0xFF3E2723);
-    Color patternColor = isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03);
-
-    String currentTitle = _azkarData[_activeIndex]['title'];
-    int currentRem = _remainingCounts[currentTitle] ?? _azkarData[_activeIndex]['target'];
-    double progress = (_azkarData[_activeIndex]['target'] - currentRem) / _azkarData[_activeIndex]['target'];
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: scaffoldBg,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: CustomPaint(painter: IslamicPatternPainter(color: patternColor)),
-              ),
-            ),
-            SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildMilestoneHeader(isDark, textColor),
-                  _buildZikrCarousel(isDark),
-                  const Spacer(),
-                  _buildMainCounter(currentRem, progress, isDark, textColor),
-                  const Spacer(),
-                  _buildControlButtons(isDark),
-                  const SizedBox(height: 80),
-                ],
-              ),
-            ),
-          ],
+        content: const Text(
+          'لقد أتممت جميع أذكار اليوم!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'Cairo'),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMilestoneHeader(bool isDark, Color textColor) {
-    double totalProgress = (_completedToday / _azkarData.length).clamp(0.0, 1.0);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "إنجاز اليوم",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textColor.withOpacity(0.7),
-                  fontFamily: 'Cairo',
-                ),
-              ),
-              Text(
-                "$_completedToday / ${_azkarData.length}",
-                style: const TextStyle(
-                  color: Color(0xFFD4AF37),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  fontFamily: 'Cairo',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: totalProgress,
-              backgroundColor: isDark ? Colors.white10 : Colors.black12,
-              color: Colors.green,
-              minHeight: 6,
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('الحمد لله'),
             ),
           ),
         ],
@@ -302,34 +184,153 @@ class _TasbihScreenState extends State<TasbihScreen> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color textColor = isDark
+        ? const Color(0xFFE8D8BD)
+        : const Color(0xFF3E2723);
+    final Color patternColor = isDark
+        ? Colors.white.withValues(alpha: 0.03)
+        : Colors.black.withValues(alpha: 0.02);
+
+    final String title = _azkarData[_activeIndex]['title'];
+    final int rem =
+        _remainingCounts[title] ?? _azkarData[_activeIndex]['target'];
+    final double progress = (1.0 - (rem / _azkarData[_activeIndex]['target']))
+        .clamp(0.0, 1.0);
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: isDark ? _darkBackground : _lightBackground,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? AppConstants.darkBackgroundGradient
+                : AppConstants.lightBackgroundGradient,
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: IslamicPatternPainter(color: patternColor),
+                ),
+              ),
+              SafeArea(
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    scrollbarTheme: ScrollbarThemeData(
+                      thumbColor: WidgetStateProperty.all(
+                        _gold.withValues(alpha: 0.5),
+                      ),
+                      thickness: WidgetStateProperty.all(5),
+                      radius: const Radius.circular(10),
+                    ),
+                  ),
+                  child: Scrollbar(
+                    child: SingleChildScrollView(
+                      // إضافة حماية من التدفق
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 15),
+                            _buildHeader(isDark, textColor),
+                            const SizedBox(height: 15),
+                            _buildZikrCarousel(isDark),
+                            const SizedBox(height: 20),
+                            ShineEffect(
+                              child: _buildMainCounter(
+                                rem,
+                                progress,
+                                isDark,
+                                textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 25),
+                            _buildControlButtons(isDark),
+                            const SizedBox(height: 20),
+                            Text(
+                              'اضغط على العداد للتسبيح',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 10,
+                                color: textColor.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 100,
+                            ), // مساحة للـ Floating Indicator
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isDark, Color textColor) {
+    double totalProgress = (_completedToday / _azkarData.length).clamp(
+      0.0,
+      1.0,
+    );
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'إنجاز اليوم',
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 12),
+            ),
+            Text(
+              '$_completedToday / ${_azkarData.length}',
+              style: const TextStyle(color: _gold, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: totalProgress,
+          backgroundColor: isDark ? Colors.white10 : Colors.black12,
+          color: _success,
+          minHeight: 4,
+        ),
+      ],
+    );
+  }
+
   Widget _buildZikrCarousel(bool isDark) {
     return SizedBox(
-      height: 80,
+      height: 70,
       child: PageView.builder(
         controller: _pageController,
         itemCount: _azkarData.length,
-        onPageChanged: (index) {
-          if (mounted) {
-            setState(() => _activeIndex = index);
-          }
-        },
-        itemBuilder: (context, index) {
-          bool active = _activeIndex == index;
-          bool done = (_remainingCounts[_azkarData[index]['title']] ?? 1) == 0;
+        onPageChanged: (i) => setState(() => _activeIndex = i),
+        itemBuilder: (context, i) {
+          bool active = _activeIndex == i;
+          bool done = (_remainingCounts[_azkarData[i]['title']] ?? 1) == 0;
           return Center(
             child: AnimatedScale(
               scale: active ? 1.0 : 0.8,
               duration: const Duration(milliseconds: 300),
               child: Text(
-                _azkarData[index]['title'],
+                _azkarData[i]['title'],
                 textAlign: TextAlign.center,
                 style: TextStyle(
+                  fontFamily: 'Amiri',
                   fontSize: active ? 22 : 16,
                   fontWeight: FontWeight.bold,
                   color: done
-                      ? Colors.green
-                      : (active ? const Color(0xFFD4AF37) : Colors.grey.withOpacity(0.5)),
-                  fontFamily: 'Amiri',
+                      ? _success
+                      : (active ? _gold : Colors.grey.withValues(alpha: 0.5)),
                 ),
               ),
             ),
@@ -339,10 +340,14 @@ class _TasbihScreenState extends State<TasbihScreen> {
     );
   }
 
-  Widget _buildMainCounter(int current, double progress, bool isDark, Color textColor) {
+  Widget _buildMainCounter(
+    int rem,
+    double progress,
+    bool isDark,
+    Color textColor,
+  ) {
     return GestureDetector(
       onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
       child: AnimatedScale(
         scale: _numberScale,
         duration: const Duration(milliseconds: 100),
@@ -350,37 +355,50 @@ class _TasbihScreenState extends State<TasbihScreen> {
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 150,
-              height: 150,
+              width: 185,
+              height: 185,
               child: CircularProgressIndicator(
                 value: progress,
                 strokeWidth: 8,
-                color: current == 0 ? Colors.green : const Color(0xFFD4AF37),
-                backgroundColor: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                color: rem == 0 ? _success : _gold,
+                backgroundColor: isDark
+                    ? Colors.white10
+                    : Colors.black.withValues(alpha: 0.05),
               ),
             ),
             Container(
-              width: 110,
-              height: 110,
+              width: 145,
+              height: 145,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDark ? const Color(0xFF2D1B10) : Colors.white,
+                gradient: isDark
+                    ? const LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [Color(0xFF2D1B10), Color(0xFF1B130F)],
+                      )
+                    : const LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [Color(0xFFFFFDF8), Color(0xFFF7E8C7)],
+                      ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 25,
-                  )
+                    color: _gold.withValues(alpha: 0.18),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
                 ],
                 border: Border.all(
-                  color: const Color(0xFFD4AF37).withOpacity(0.2),
+                  color: _gold.withValues(alpha: 0.2),
                   width: 2,
                 ),
               ),
               child: Center(
                 child: Text(
-                  "$current",
+                  '$rem',
                   style: TextStyle(
-                    fontSize: 35,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                     fontFamily: 'Cairo',
@@ -398,57 +416,53 @@ class _TasbihScreenState extends State<TasbihScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _circleBtn(Icons.arrow_forward_ios, () {
-          _pageController.previousPage(
+        _btn(
+          Icons.arrow_forward_ios,
+          () => _pageController.previousPage(
             duration: const Duration(milliseconds: 300),
             curve: Curves.ease,
-          );
-        }, isDark),
-        const SizedBox(width: 35),
-        _circleBtn(Icons.refresh, () async {
-          try {
-            final prefs = await SharedPreferences.getInstance();
-            String current = _azkarData[_activeIndex]['title'];
-            setState(() {
-              if (_remainingCounts[current] == 0) _completedToday--;
-              _remainingCounts[current] = _azkarData[_activeIndex]['target'];
-              prefs.setInt("${current}_rem", _azkarData[_activeIndex]['target']);
-            });
-            ErrorHandler.showSuccess(context, 'تم إعادة تعيين العداد');
-          } catch (e) {
-            ErrorHandler.logError("Reset error: $e", StackTrace.current);
-          }
-        }, isDark, isLarge: true),
-        const SizedBox(width: 35),
-        _circleBtn(Icons.arrow_back_ios_new, () {
-          _pageController.nextPage(
+          ),
+        ),
+        const SizedBox(width: 30),
+        _btn(Icons.refresh, () async {
+          final prefs = await SharedPreferences.getInstance();
+          String title = _azkarData[_activeIndex]['title'];
+          setState(() {
+            if (_remainingCounts[title] == 0) _completedToday--;
+            _remainingCounts[title] = _azkarData[_activeIndex]['target'];
+            prefs.setInt('${title}_rem', _azkarData[_activeIndex]['target']);
+          });
+        }, isLarge: true),
+        const SizedBox(width: 30),
+        _btn(
+          Icons.arrow_back_ios_new,
+          () => _pageController.nextPage(
             duration: const Duration(milliseconds: 300),
             curve: Curves.ease,
-          );
-        }, isDark),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _circleBtn(IconData icon, VoidCallback onTap, bool isDark, {bool isLarge = false}) {
+  Widget _btn(IconData icon, VoidCallback onTap, {bool isLarge = false}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        padding: EdgeInsets.all(isLarge ? 14 : 8),
+        padding: EdgeInsets.all(isLarge ? 12 : 8),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.03),
-          border: Border.all(
-            color: const Color(0xFFD4AF37).withOpacity(0.4),
-            width: 1,
-          ),
+          gradient: AppConstants.goldGradient,
+          boxShadow: [
+            BoxShadow(
+              color: _gold.withValues(alpha: 0.20),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFFD4AF37),
-          size: isLarge ? 26 : 18,
-        ),
+        child: Icon(icon, color: Colors.white, size: isLarge ? 24 : 18),
       ),
     );
   }

@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'constants.dart';
 import 'error_handler.dart';
 
 class AppUtils {
@@ -105,8 +105,8 @@ class AppUtils {
   // إنشاء نص عشوائي من القائمة
   static String getRandomText(List<String> texts) {
     if (texts.isEmpty) return "";
-    final random = DateTime.now().millisecond;
-    return texts[random % texts.length];
+    final random = Random();
+    return texts[random.nextInt(texts.length)];
   }
 
   // تأثير الاهتزاز الخفيف
@@ -132,7 +132,10 @@ class AppUtils {
     try {
       await Clipboard.setData(ClipboardData(text: text));
     } catch (e) {
-      ErrorHandler.logError("Error copying to clipboard: $e", StackTrace.current);
+      ErrorHandler.logError(
+        "Error copying to clipboard: $e",
+        StackTrace.current,
+      );
     }
   }
 
@@ -187,7 +190,11 @@ class AppUtils {
 
   // حساب عدد الكلمات
   static int countWords(String text) {
-    return text.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length;
+    return text
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .length;
   }
 
   // إزالة علامات الترقيم
@@ -197,9 +204,12 @@ class AppUtils {
 
   // تحويل إلى أحرف كبيرة
   static String toTitleCase(String text) {
-    return text.split(' ').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 }

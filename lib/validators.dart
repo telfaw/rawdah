@@ -1,5 +1,3 @@
-import 'constants.dart';
-
 class Validators {
   // التحقق من الاسم
   static String? validateName(String? value) {
@@ -55,7 +53,10 @@ class Validators {
   }
 
   // التحقق من تأكيد كلمة المرور
-  static String? validateConfirmPassword(String? value, String originalPassword) {
+  static String? validateConfirmPassword(
+    String? value,
+    String originalPassword,
+  ) {
     if (value == null || value.isEmpty) {
       return 'تأكيد كلمة المرور مطلوب';
     }
@@ -66,7 +67,12 @@ class Validators {
   }
 
   // التحقق من النص
-  static String? validateText(String? value, String fieldName, {int minLength = 1, int maxLength = 1000}) {
+  static String? validateText(
+    String? value,
+    String fieldName, {
+    int minLength = 1,
+    int maxLength = 1000,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName مطلوب';
     }
@@ -80,7 +86,12 @@ class Validators {
   }
 
   // التحقق من الرقم
-  static String? validateNumber(String? value, String fieldName, {int? min, int? max}) {
+  static String? validateNumber(
+    String? value,
+    String fieldName, {
+    int? min,
+    int? max,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName مطلوب';
     }
@@ -134,7 +145,11 @@ class Validators {
   }
 
   // التحقق من حقل اختياري
-  static String? validateOptional(String? value, String fieldName, {int maxLength = 500}) {
+  static String? validateOptional(
+    String? value,
+    String fieldName, {
+    int maxLength = 500,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return null; // حقل اختياري
     }

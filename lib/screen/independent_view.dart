@@ -8,7 +8,11 @@ class IndependentView extends StatelessWidget {
   final String imageName;
   final String title;
 
-  const IndependentView({super.key, required this.imageName, required this.title});
+  const IndependentView({
+    super.key,
+    required this.imageName,
+    required this.title,
+  });
 
   // دالة المشاركة الخاصة بالصفحات الثابتة
   Future<void> _shareImage() async {
@@ -18,12 +22,14 @@ class IndependentView extends StatelessWidget {
       final file = File('${tempDir.path}/$imageName.jpg');
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '$title \nمن تطبيق الروضة الشريفة',
+      await SharePlus.instance.share(
+        ShareParams(
+          text: '$title \nمن تطبيق الروضة الشريفة',
+          files: [XFile(file.path)],
+        ),
       );
     } catch (e) {
-      debugPrint("خطأ في المشاركة: $e");
+      debugPrint('خطأ في المشاركة: $e');
     }
   }
 
@@ -36,11 +42,18 @@ class IndependentView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         title: Text(
           title,
-          style: const TextStyle(fontFamily: 'Amiri', color: Color(0xFFE6D5B8), fontSize: 22),
+          style: const TextStyle(
+            fontFamily: 'Amiri',
+            color: Color(0xFFE6D5B8),
+            fontSize: 22,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Color(0xFFE6D5B8)), // أيقونة إغلاق
+          icon: const Icon(
+            Icons.close,
+            color: Color(0xFFE6D5B8),
+          ), // أيقونة إغلاق
           onPressed: () => Navigator.pop(context),
         ),
         actions: [

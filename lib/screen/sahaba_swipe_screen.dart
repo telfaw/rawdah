@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
+import 'package:rawdah/utils/effects.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SahabaSwipeScreen extends StatefulWidget {
   final int initialIndex;
@@ -24,6 +27,7 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
   late int _currentIndex;
   bool _isSharing = false;
   double _currentScale = 1.0;
+  double _fontSize = 14.0;
 
   @override
   void initState() {
@@ -33,8 +37,10 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
   }
 
   Future<void> _shareSahabi(BuildContext context) async {
-    if (_isSharing) return;
+    if (_isSharing || !mounted) return;
 
+    final currentContext = context;
+    final RenderBox? shareBox = currentContext.findRenderObject() as RenderBox?;
     setState(() => _isSharing = true);
 
     try {
@@ -44,23 +50,32 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
       final file = await File('${tempDir.path}/sahabi_$fileId.jpg').create();
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
-      final box = context.findRenderObject() as RenderBox?;
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '🌟 من تطبيق الروضة الشريفة:\n'
-            '${widget.names[_currentIndex + 1]} رضي الله عنه\n'
-            '#الروضة_الشريفة #الصحابة #الإسلام',
-        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      final RenderBox? box = shareBox;
+      if (box == null) throw Exception('RenderBox not found');
+
+      final Offset position = box.localToGlobal(Offset.zero);
+      final Size size = box.size;
+
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              '🌟 من تطبيق الروضة الشريفة:\n'
+              '${widget.names[_currentIndex + 1]} رضي الله عنه\n'
+              '#الروضة_الشريفة #الصحابة #الإسلام',
+          files: [XFile(file.path)],
+          sharePositionOrigin: position & size,
+        ),
       );
 
-      if (mounted) {
-        ErrorHandler.showSuccess(context, 'تم المشاركة بنجاح');
-      }
+      if (!mounted || !currentContext.mounted) return;
+      ErrorHandler.showSuccess(currentContext, 'تم المشاركة بنجاح');
     } catch (e) {
-      ErrorHandler.logError("Share error: $e",
-          e is Error ? (e.stackTrace ?? StackTrace.current) : StackTrace.current);
-      if (mounted) {
-        ErrorHandler.showError(context, 'فشلت مشاركة الصورة');
+      ErrorHandler.logError(
+        'Share error: $e',
+        e is Error ? (e.stackTrace ?? StackTrace.current) : StackTrace.current,
+      );
+      if (mounted && currentContext.mounted) {
+        ErrorHandler.showError(currentContext, 'فشلت مشاركة الصورة');
       }
     } finally {
       if (mounted) {
@@ -70,101 +85,120 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
   }
 
   void _showSahabiInfo() {
-    final sahabiInfo = [
-      "",
-      "أول الخلفاء الراشدين، وأعظم الصحابة بعد النبي، لقب بالصديق لإيمانه بنبي الله في الغار",
-      "ثاني الخلفاء الراشدين، الفاروق الذي فرق بين الحق والباطل، أقوى الدول الإسلامية في عهده",
-      "ثالث الخلفاء الراشدين، ذو النورين، جمع بين بنتي النبي، أنزل الله سكينته عليه",
-      "رابع الخلفاء الراشدين، cousin النبي وزوج ابنته فاطمة، باب علم النبي",
-      "أحد العشرة المبشرين بالجنة، اشترى ناقة النبي عند الهجرة، استشهد في الجمل",
-      "أحد العشرة المبشرين بالجنة، من أوائل الصحابة إسلاماً، زوج فاطمة بنت النبي",
-      "أحد العشرة المبشرين بالجنة، ابن عمة النبي، استشهد في معركة الجمل",
-      "أمين هذه الأمة، أحد العشرة المبشرين، قاتل في سبيل الله حتى مات",
-      "أحد العشرة المبشرين بالجنة، أغنى الصحابة، أكرمهم الله بالمال",
-      "أحد العشرة المبشرين بالجنة، أول من رمى سهماً في سبيل الله، استشهد أخوه في أحد",
-    ];
-
     if (!mounted) return;
+
+    final currentSahabi = AppConstants.sahabaData[_currentIndex];
 
     showDialog(
       context: context,
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.info_outline, color: Color(0xFFD4AF37)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  widget.names[_currentIndex + 1],
-                  style: const TextStyle(
-                    fontFamily: 'Amiri',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: AppConstants.primaryGold,
                   ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      currentSahabi['name'],
+                      style: const TextStyle(
+                        fontFamily: 'Amiri',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.text_increase,
+                      size: 18,
+                      color: AppConstants.primaryGold,
+                    ),
+                    onPressed: () {
+                      setDialogState(() => _fontSize += 2);
+                      setState(() {});
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.text_decrease,
+                      size: 18,
+                      color: AppConstants.primaryGold,
+                    ),
+                    onPressed: () {
+                      if (_fontSize > 10) {
+                        setDialogState(() => _fontSize -= 2);
+                        setState(() {});
+                      }
+                    },
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryGold.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        currentSahabi['bio'],
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: _fontSize,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      'رضي الله عنهم وأرضاهم، هم خير القرون.',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    sahabiInfo[_currentIndex + 1],
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 14,
-                      height: 1.6,
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('إغلاق'),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  'رضي الله عنهم وأرضاهم، هم خير القرون.',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
+                    ElevatedButton.icon(
+                      onPressed: () => _shareSahabi(context),
+                      icon: const Icon(Icons.share, size: 16),
+                      label: const Text('مشاركة'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.primaryGold,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('إغلاق'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _shareSahabi(context),
-                  icon: const Icon(Icons.share, size: 16),
-                  label: const Text('مشاركة'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4AF37),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -184,32 +218,34 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFE6D5B8)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                key: ValueKey<int>(_currentIndex),
-                widget.names[_currentIndex + 1],
-                style: const TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE6D5B8),
-                  shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+        title: ShineEffect(
+          child: Column(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  key: ValueKey<int>(_currentIndex),
+                  widget.names[_currentIndex + 1],
+                  style: const TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE6D5B8),
+                    shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+                  ),
                 ),
               ),
-            ),
-            const Text(
-              "رَضِيَ اللَّهُ عَنْهُ وَأَرْضَاهُ",
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 14,
-                color: Color(0xFFE6D5B8),
-                fontWeight: FontWeight.w300,
+              const Text(
+                "رَضِيَ اللَّهُ عَنْهُ وَأَرْضَاهُ",
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 14,
+                  color: Color(0xFFE6D5B8),
+                  fontWeight: FontWeight.w300,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -219,13 +255,15 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
           IconButton(
             icon: _isSharing
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE6D5B8)),
-              ),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFFE6D5B8),
+                      ),
+                    ),
+                  )
                 : const Icon(Icons.share_rounded, color: Color(0xFFE6D5B8)),
             onPressed: _isSharing ? null : () => _shareSahabi(context),
           ),
@@ -278,14 +316,21 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                           "assets/images/$imageNum.jpg",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            ErrorHandler.logError("Image load error: $imageNum", stackTrace!);
+                            ErrorHandler.logError(
+                              "Image load error: $imageNum",
+                              stackTrace!,
+                            );
                             return Container(
                               width: double.infinity,
                               height: 400,
                               decoration: BoxDecoration(
                                 color: const Color(0xFF2D1B10),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFD4AF37,
+                                  ).withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -300,7 +345,9 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                                     'صورة الصحابي غير متوفرة',
                                     style: TextStyle(
                                       fontFamily: 'Cairo',
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -315,8 +362,6 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
               );
             },
           ),
-
-          // مؤشر التكبير
           if (_currentScale != 1.0)
             Positioned(
               top: 120,
@@ -324,19 +369,28 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
               right: 20,
               child: SafeArea(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.zoom_in, color: Color(0xFFD4AF37), size: 16),
+                      const Icon(
+                        Icons.zoom_in,
+                        color: Color(0xFFD4AF37),
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: LinearProgressIndicator(
                           value: (_currentScale - 0.5) / 3.5,
-                          backgroundColor: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+                          backgroundColor: const Color(
+                            0xFFD4AF37,
+                          ).withValues(alpha: 0.2),
                           color: const Color(0xFFD4AF37),
                           minHeight: 4,
                         ),
@@ -355,8 +409,6 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                 ),
               ),
             ),
-
-          // مؤشر السحب السفلي المتقدم
           Positioned(
             bottom: 40,
             left: 0,
@@ -377,7 +429,7 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       widget.names.length - 1,
-                          (index) => GestureDetector(
+                      (index) => GestureDetector(
                         onTap: () {
                           _pageController.animateToPage(
                             index,
@@ -417,8 +469,6 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
               ),
             ),
           ),
-
-          // زر القائمة العائمة
           Positioned(
             bottom: 120,
             right: 20,
@@ -470,7 +520,9 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                       height: 40,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Center(
                         child: Text(
@@ -490,7 +542,10 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                       ),
                     ),
                     trailing: _currentIndex == index
-                        ? const Icon(Icons.check_circle, color: Color(0xFFD4AF37))
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFFD4AF37),
+                          )
                         : null,
                     onTap: () {
                       Navigator.pop(context);

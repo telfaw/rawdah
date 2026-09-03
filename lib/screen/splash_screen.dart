@@ -1,6 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:rawdah/error_handler.dart';
+import 'package:rawdah/constants.dart';
+import 'package:rawdah/utils/effects.dart';
+import 'package:rawdah/utils/nusuk_helper.dart';
+
 import 'sahaba_gallery.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,7 +22,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final String serverRequiredVersion = "1.0.5";
+  final String serverRequiredVersion = AppConstants.appVersion;
   final List<String> _spiritualMessages = [
     "استغل وقتك بذكر الله",
     "صلِّ على النبي ﷺ تفرج همومك",
@@ -31,29 +35,36 @@ class _SplashScreenState extends State<SplashScreen> {
 
   int _messageIndex = 0;
   Timer? _messageTimer;
-  Timer? _navigationTimer;
-  bool _isNavigating = false;
+  bool _showDisclaimer = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeSplash();
+    _startMessageCycle();
+    // إظهار التنبيه بعد 3 ثوانٍ بدلاً من الانتقال التلقائي
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() => _showDisclaimer = true);
+      }
+    });
   }
 
   @override
   void dispose() {
     _messageTimer?.cancel();
-    _navigationTimer?.cancel();
     super.dispose();
   }
 
-  void _initializeSplash() {
-    try {
-      _startMessageCycle();
-      _checkVersionAndNavigate();
-    } catch (e) {
-      ErrorHandler.logError("Splash initialization error: $e", StackTrace.current);
-      _navigateToHome();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAssets();
+  }
+
+  void _precacheAssets() {
+    precacheImage(const AssetImage("assets/images/s.jpg"), context);
+    for (int i = 1; i <= 4; i++) {
+      precacheImage(AssetImage("assets/images/$i.jpg"), context);
     }
   }
 
@@ -67,112 +78,21 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
-  void _checkVersionAndNavigate() {
-    _navigationTimer = Timer(const Duration(seconds: 8), () {
-      if (mounted && !_isNavigating) {
-        if (widget.currentAppVersion == serverRequiredVersion) {
-          _navigateToHome();
-        } else {
-          _showUpdateDialog();
-        }
-      }
-    });
-  }
-
   void _navigateToHome() {
-    if (mounted && !_isNavigating) {
-      _isNavigating = true;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => SahabaGallery(
-            toggleTheme: widget.toggleTheme,
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 1000),
-        ),
-      );
-    }
-  }
-
-  void _showUpdateDialog() {
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF2D1B10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFFE6D5B8), width: 1),
-          ),
-          title: const Text(
-            "تحديث جديد متوفر",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Amiri',
-              color: Color(0xFFE6D5B8),
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.system_update_rounded,
-                color: Color(0xFFD4AF37),
-                size: 60,
-              ),
-              const SizedBox(height: 15),
-              Text(
-                "إصدارك الحالي (${widget.currentAppVersion}) يحتاج لتحديث إلى ($serverRequiredVersion) لمتابعة الاستخدام.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  color: Colors.white70,
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // هنا يمكن إضافة رابط متجر التطبيقات
-                  ErrorHandler.showSuccess(context, "جاري التوجه إلى المتجر...");
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4AF37),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                icon: const Icon(Icons.update, color: Colors.white),
-                label: const Text(
-                  "تحديث الآن",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Cairo',
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            SahabaGallery(toggleTheme: widget.toggleTheme),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
       ),
     );
+  }
+
+  Future<void> _openNusuk() async {
+    await NusukHelper.openNusukInStore();
   }
 
   @override
@@ -185,17 +105,15 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Image.asset(
               "assets/images/s.jpg",
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFF5D4037), Color(0xFF2D1B10)],
-                    ),
+              errorBuilder: (context, error, stackTrace) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF5D4037), Color(0xFF2D1B10)],
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
 
@@ -207,82 +125,172 @@ class _SplashScreenState extends State<SplashScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.8),
+                    Colors.black.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.8),
                   ],
                 ),
               ),
             ),
           ),
 
-          // مؤشر التحميل
-          const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  color: Color(0xFFE6D5B8),
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4AF37)),
-                ),
-                SizedBox(height: 15),
-                Text(
-                  "جاري التحميل...",
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 12,
-                    fontFamily: 'Cairo',
+          // الرسائل الروحية (تختفي عند ظهور التنبيه)
+          if (!_showDisclaimer)
+            Positioned(
+              bottom: 150,
+              left: 30,
+              right: 30,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 1000),
+                child: Text(
+                  _spiritualMessages[_messageIndex],
+                  key: ValueKey<int>(_messageIndex),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 22,
+                    color: Color(0xFFE6D5B8),
+                    shadows: [Shadow(blurRadius: 15, color: Colors.black)],
+                    height: 1.5,
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // الرسائل الروحية
-          Positioned(
-            bottom: 120,
-            left: 30,
-            right: 30,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 1000),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: Text(
-                _spiritualMessages[_messageIndex],
-                key: ValueKey<int>(_messageIndex),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 22,
-                  color: Color(0xFFE6D5B8),
-                  shadows: [Shadow(blurRadius: 15, color: Colors.black)],
-                  height: 1.5,
                 ),
               ),
             ),
-          ),
+
+          // مؤشر التحميل البسيط
+          if (!_showDisclaimer)
+            const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFD4AF37),
+                strokeWidth: 2,
+              ),
+            ),
+
+          // نافذة إخلاء المسؤولية
+          if (_showDisclaimer)
+            Center(
+              child: AnimatedOpacity(
+                opacity: 1.0,
+                duration: const Duration(milliseconds: 500),
+                child: ShineEffect(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 30),
+                    padding: const EdgeInsets.all(25),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2D1B10).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFFD4AF37),
+                          size: 50,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "تنبيه هام",
+                          style: TextStyle(
+                            fontFamily: 'Amiri',
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE6D5B8),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        const Text(
+                          "نحيطكم علماً بأن هذا التطبيق تعليمي وثقافي وليس له علاقة بحجوزات الروضة الشريفة. الحجوزات الرسمية تتم حصراً عبر تطبيق 'نسك'.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 14,
+                            color: Colors.white70,
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _navigateToHome,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD4AF37),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: const Text(
+                                  "عُلم (دخول)",
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _openNusuk,
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: Color(0xFFD4AF37),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: const Text(
+                                  "تطبيق نسك",
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    color: Color(0xFFD4AF37),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           // رقم الإصدار
           Positioned(
             bottom: 40,
             left: 0,
             right: 0,
-            child: GestureDetector(
-              onTap: () {
-                // ميزة مخفية: الضغط على رقم الإصدار يظهر رسالة
-                ErrorHandler.showSuccess(context, 'تطبيق الروضة الشريفة - نسخة مطورة');
-              },
-              child: Opacity(
-                opacity: 0.6,
-                child: Text(
-                  "الإصدار ${widget.currentAppVersion}",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontFamily: 'Cairo',
-                  ),
+            child: Opacity(
+              opacity: 0.5,
+              child: Text(
+                "الإصدار ${widget.currentAppVersion}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ),
