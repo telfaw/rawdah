@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
+import 'package:rawdah/utils/effects.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../utils/effects.dart';
 
 class DeveloperScreen extends StatelessWidget {
   const DeveloperScreen({super.key});
+
+  static const Color primaryGold = Color(0xFFD4AF37);
 
   Future<void> _launchURL(String url) async {
     try {
@@ -38,15 +39,15 @@ class DeveloperScreen extends StatelessWidget {
                 fontFamily: 'Amiri',
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFD4AF37),
+                color: primaryGold,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             _buildContactOption(
               context,
               Icons.chat,
               'واتساب',
-              'تواصل سريع',
+              'تواصل سريع للإنتاج التقني',
               () => _launchURL("https://wa.me/967777004173"),
               Colors.green,
             ),
@@ -62,9 +63,9 @@ class DeveloperScreen extends StatelessWidget {
               context,
               Icons.phone,
               'اتصال',
-              'للدعم الفني',
+              'للدعم الفني المباشر',
               () => _launchURL("tel:967777004173"),
-              const Color(0xFFD4AF37),
+              primaryGold,
             ),
           ],
         ),
@@ -80,34 +81,45 @@ class DeveloperScreen extends StatelessWidget {
     VoidCallback onTap,
     Color color,
   ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: primaryGold.withValues(alpha: 0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: color, size: 24),
+          child: Icon(icon, color: color, size: 22),
         ),
         title: Text(
           title,
           style: const TextStyle(
             fontFamily: 'Cairo',
             fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
+          style: const TextStyle(fontFamily: 'Cairo', fontSize: 11),
         ),
         trailing: const Icon(
           Icons.arrow_back_ios_new,
-          size: 16,
+          size: 14,
           color: Colors.grey,
         ),
       ),
@@ -117,7 +129,6 @@ class DeveloperScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    const Color primaryGold = Color(0xFFD4AF37);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -127,7 +138,7 @@ class DeveloperScreen extends StatelessWidget {
             : const Color(0xFFFCF9F2),
         appBar: AppBar(
           title: const ShineEffect(
-            child: Text("عن المطور", style: TextStyle(fontFamily: 'Amiri')),
+            child: Text("عن المطور", style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
           ),
           centerTitle: true,
           elevation: 0,
@@ -142,37 +153,40 @@ class DeveloperScreen extends StatelessWidget {
                 : AppConstants.lightBackgroundGradient,
           ),
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
                 Center(
                   child: ShineEffect(
                     child: Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: primaryGold, width: 3),
+                        border: Border.all(color: primaryGold, width: 2.5),
                         boxShadow: [
                           BoxShadow(
-                            color: primaryGold.withValues(alpha: 0.3),
+                            color: primaryGold.withValues(alpha: 0.35),
                             blurRadius: 20,
-                            spreadRadius: 5,
+                            spreadRadius: 4,
                           ),
                         ],
                       ),
                       child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.transparent,
+                        radius: 52,
+                        backgroundColor: isDark ? const Color(0xFF251810) : Colors.white,
                         child: Icon(
                           Icons.person_pin,
-                          size: 90,
-                          color: primaryGold.withValues(alpha: 0.8),
+                          size: 80,
+                          color: primaryGold.withValues(alpha: 0.9),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 const Text(
                   "فواز الشميري",
                   style: TextStyle(
@@ -183,47 +197,100 @@ class DeveloperScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "متخصص تقنية معلومات",
+                  "متخصص تقنية معلومات ومطور تطبيقات",
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 16,
-                    color: isDark ? Colors.white54 : Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : AppConstants.brownDark,
                   ),
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: isDark
+                        ? AppConstants.brownGradient
+                        : const LinearGradient(
+                            colors: [Color(0xFFFFFDF8), Color(0xFFF6ECD7)],
+                          ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: primaryGold.withValues(alpha: 0.28),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Text(
-                    "خبير في برمجة تطبيقات الهواتف الذكية والأنظمة البرمجية، أسعى لتوظيف التكنولوجيا الحديثة في خدمة المحتوى الإسلامي والحلول الخدمية المبتكرة.",
+                    "خبير في برمجة تطبيقات الهواتف الذكية والأنظمة البرمجية، أسعى لتوظيف التكنولوجيا الحديثة في خدمة المحتوى الإسلامي والحلول الخدمية المبتكرة باحترافية عالية.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Cairo',
-                      fontSize: 14,
-                      height: 1.6,
+                      fontSize: 13,
+                      height: 1.7,
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Divider(indent: 50, endIndent: 50, thickness: 0.5),
+                const SizedBox(height: 16),
                 const Text(
                   "تواصل معي للمقترحات والدعم الفني",
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 14,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                     color: primaryGold,
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 12),
                 _buildContactCard(
                   icon: Icons.chat_outlined,
                   label: "تواصل عبر واتساب",
-                  value: "إرسال رسالة مباشرة",
+                  sublabel: "رد سريع ومباشر",
                   color: Colors.green,
-                  onTap: () => _showContactOptions(context),
+                  onTap: () => _launchURL("https://wa.me/967777004173"),
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 10),
-                _buildAdditionalInfo(isDark),
+                _buildContactCard(
+                  icon: Icons.email_outlined,
+                  label: "إرسال رسالة إلكترونية",
+                  sublabel: "fzfludev@gmail.com",
+                  color: Colors.blue,
+                  onTap: () => _launchURL("mailto:fzfludev@gmail.com"),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 10),
+                _buildContactCard(
+                  icon: Icons.phone_outlined,
+                  label: "اتصال تلفوني مباشر",
+                  sublabel: "+967 777 004 173",
+                  color: primaryGold,
+                  onTap: () => _launchURL("tel:967777004173"),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => _showContactOptions(context),
+                  icon: const Icon(Icons.hub_outlined, color: primaryGold, size: 18),
+                  label: const Text(
+                    "عرض جميع خيارات التواصل",
+                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryGold,
+                    side: const BorderSide(color: primaryGold),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
                 const SizedBox(height: 40),
               ],
             ),
@@ -236,141 +303,76 @@ class DeveloperScreen extends StatelessWidget {
   Widget _buildContactCard({
     required IconData icon,
     required String label,
-    required String value,
+    required String sublabel,
     required Color color,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 8,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          title: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          subtitle: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-          trailing: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 14,
-            color: Colors.grey,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfo(bool isDark) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-      padding: const EdgeInsets.all(15),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF7F3E9),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.favorite, color: Color(0xFFD4AF37), size: 20),
-              SizedBox(width: 10),
-              Text(
-                "رسالتنا",
-                style: TextStyle(
-                  fontFamily: 'Amiri',
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFD4AF37),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "نسعى لنكون منارة تقنية في خدمة الإسلام والمسلمين، نحو تطبيقات ذكية تعكس أصالة الدين وروح العصر.",
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 13,
-              height: 1.6,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 15),
-          const Divider(color: Color(0xFFD4AF37), thickness: 0.5),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildInfoChip('اليمن', Icons.location_on),
-              _buildInfoChip('Flutter Dev', Icons.code),
-              _buildInfoChip('+5 سنوات', Icons.work),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(String text, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+        color: isDark ? AppConstants.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: const Color(0xFFD4AF37)),
-          const SizedBox(width: 5),
-          Text(
-            text,
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 11,
-              color: Color(0xFFD4AF37),
-            ),
+        border: Border.all(color: primaryGold.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: isDark ? Colors.white : AppConstants.brownDark,
+                        ),
+                      ),
+                      Text(
+                        sublabel,
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: primaryGold,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

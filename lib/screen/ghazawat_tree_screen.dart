@@ -4,6 +4,7 @@ import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
 import 'package:rawdah/utils/effects.dart';
 import 'package:rawdah/utils/painters.dart';
+import 'package:rawdah/utils/settings_helper.dart';
 
 class GhazawatTreeScreen extends StatefulWidget {
   const GhazawatTreeScreen({super.key});
@@ -14,6 +15,16 @@ class GhazawatTreeScreen extends StatefulWidget {
 
 class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
   final ScrollController _scrollController = ScrollController();
+  double _fontSize = 14.0;
+
+  Future<void> _loadFontSettings() async {
+    final sizes = await AppSettings.loadFontSizes();
+    if (mounted) {
+      setState(() {
+        _fontSize = sizes['body'] ?? 14.0;
+      });
+    }
+  }
 
   static int get _ghazawatTitleIndex => 1 + _battleStories.length;
   static int get _sarayaTitleIndex =>
@@ -113,6 +124,7 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
   void initState() {
     super.initState();
     _initializeScreen();
+    _loadFontSettings();
   }
 
   void _initializeScreen() {
@@ -248,89 +260,84 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
 
   Widget _buildHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
         gradient: isDark
             ? const LinearGradient(
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
-                colors: [
-                  Color(0xFF1E1713),
-                  Color(0xFF382B21),
-                  Color(0xFF1A120F),
-                ],
+                colors: [Color(0xFF1D1713), Color(0xFF2E201B)],
               )
             : const LinearGradient(
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
-                colors: [
-                  Color(0xFF5F4337),
-                  Color(0xFF4A3229),
-                  Color(0xFF2F201B),
-                ],
+                colors: [Color(0xFFFCF4E7), Color(0xFFF0E0B2)],
               ),
-        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
-          width: 1.2,
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+          width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: AppConstants.goldGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.22),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const ShineEffect(
-                  child: Icon(Icons.flag_rounded, color: Colors.white),
-                ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: AppConstants.goldGradient,
+              border: Border.all(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const ShineEffect(
+              child: Icon(
+                Icons.flag_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   'غزوات وسرايا النبي ﷺ',
                   style: TextStyle(
                     fontFamily: 'Amiri',
-                    fontSize: 22,
+                    fontSize: 21,
+                    height: 1.1,
                     fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? const Color(0xFFE6D5B8)
-                        : const Color(0xFFE6D5B8),
-                    // ? const Color(0xFFE6D5B8)
-                    //                     : const Color(0xFF3E2723),
+                    color: isDark ? const Color(0xFFE8D8BD) : const Color(0xFF3E2723),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'معلومات موجزة عن أهم الغزوات والبعوث العسكرية في صدر الإسلام، مع تاريخها، قائدها، هدفها، والفائدة التي تحققت منها.',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 14,
-              height: 1.8,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFFF1E4D1) : const Color(0xFFffff1B),
+                Text(
+                  'معلومات موجزة عن أهم الغزوات والبعوث العسكرية في صدر الإسلام',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 10.5,
+                    color: (isDark ? const Color(0xFFE8D8BD) : const Color(0xFF3E2723)).withValues(alpha: 0.65),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -575,24 +582,21 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: isDark
-            ? const LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [Color(0xFF2B1D16), Color(0xFF1F170F)],
-              )
+            ? AppConstants.brownGradient
             : const LinearGradient(
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
-                colors: [Color(0xFFFFFDF7), Color(0xFFF7E7C6)],
+                colors: [Color(0xFFFFFDF8), Color(0xFFF6ECD7)],
               ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
+            blurRadius: 14,
             offset: const Offset(0, 5),
           ),
         ],
@@ -615,13 +619,11 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
               children: [
                 Text(
                   story.title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Amiri',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? const Color(0xFFF7EED7)
-                        : const Color(0xFF2E201B),
+                    color: Color(0xFFD4AF37),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -629,8 +631,8 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
                   story.content,
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 14,
-                    height: 1.9,
+                    fontSize: _fontSize,
+                    height: 1.85,
                     fontWeight: FontWeight.w600,
                     color: isDark
                         ? const Color(0xFFECDDB7)
@@ -655,24 +657,21 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: isDark
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF2A1B13), Color(0xFF1B130F)],
-              )
+            ? AppConstants.brownGradient
             : const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFFF9F0), Color(0xFFF7E7C3)],
+                colors: [Color(0xFFFFFDF8), Color(0xFFF6ECD7)],
               ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.10 : 0.04),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
+            blurRadius: 14,
             offset: const Offset(0, 5),
           ),
         ],
@@ -682,11 +681,11 @@ class _GhazawatTreeScreenState extends State<GhazawatTreeScreen> {
         children: [
           Text(
             item['name'] ?? '',
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Amiri',
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFFF8F0E2) : const Color(0xFF2E201B),
+              color: Color(0xFFD4AF37),
             ),
           ),
           const SizedBox(height: 12),

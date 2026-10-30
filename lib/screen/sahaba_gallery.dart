@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rawdah/constants.dart';
 import 'package:rawdah/screen/about_app_screen.dart';
+import 'package:rawdah/screen/duaa_occasions_screen.dart';
 import 'package:rawdah/screen/sahaba_swipe_screen.dart';
+import 'package:rawdah/screen/settings_dialog.dart';
 import 'package:rawdah/screen/tasbih_screen.dart';
 import 'package:rawdah/utils/effects.dart';
 import 'package:rawdah/utils/nusuk_helper.dart';
@@ -23,18 +25,32 @@ class SahabaGallery extends StatefulWidget {
   State<SahabaGallery> createState() => _SahabaGalleryState();
 }
 
-class _SahabaGalleryState extends State<SahabaGallery> {
+class _SahabaGalleryState extends State<SahabaGallery>
+    with SingleTickerProviderStateMixin {
   static const List<String> _pageTitles = [
     "سيرة النبي ﷺ",
     "العشرة المبشرون بالجنة",
     "عن الروضة الشريفة",
     "أحاديث وفضائل الروضة",
-    "الاستغفار",
+    "أدعية القرآن والمناسبات",
+    "المسبحة والاستغفار",
     "شجرة الغزوات",
     "معالم المدينة المنورة",
   ];
 
+  static const List<Map<String, dynamic>> _pageNavItems = [
+    {"title": "السيرة النبوية", "icon": Icons.account_circle_outlined, "isNew": false},
+    {"title": "المبشرون", "icon": Icons.emoji_events_outlined, "isNew": false},
+    {"title": "عن الروضة", "icon": Icons.mosque_outlined, "isNew": false},
+    {"title": "الأحاديث", "icon": Icons.menu_book_rounded, "isNew": false},
+    {"title": "أدعية القرآن", "icon": Icons.auto_awesome, "isNew": true},
+    {"title": "المسبحة الذكية", "icon": Icons.self_improvement_rounded, "isNew": false},
+    {"title": "الغزوات", "icon": Icons.landscape_outlined, "isNew": false},
+    {"title": "معالم المدينة", "icon": Icons.location_on_outlined, "isNew": false},
+  ];
+
   final PageController _mainPageController = PageController(initialPage: 0);
+  late final TabController _tabController;
   double _currentPageValue = 0.0;
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -43,6 +59,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: _pageNavItems.length, vsync: this);
     _speech = stt.SpeechToText();
     _mainPageController.addListener(_onPageScroll);
   }
@@ -51,6 +68,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
   void dispose() {
     _mainPageController.removeListener(_onPageScroll);
     _mainPageController.dispose();
+    _tabController.dispose();
     if (_speech.isListening) {
       _speech.stop();
     }
@@ -63,8 +81,20 @@ class _SahabaGalleryState extends State<SahabaGallery> {
       double? page = _mainPageController.page;
       if (page != null && page != _currentPageValue) {
         setState(() => _currentPageValue = page);
+        final int roundPage = page.round();
+        if (_tabController.index != roundPage && !_tabController.indexIsChanging) {
+          _tabController.animateTo(roundPage);
+        }
       }
     }
+  }
+
+  void _animateToPage(int index) {
+    _mainPageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   void _listen() async {
@@ -78,7 +108,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
         if (_speechEnabled) {
           setState(() => _isListening = true);
           _speech.listen(
-            localeId: 'ar_SA',
+            listenOptions: stt.SpeechListenOptions(localeId: 'ar_SA'),
             onResult: (val) {
               if (val.finalResult) _processVoiceSearch(val.recognizedWords);
             },
@@ -148,6 +178,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
         ? const Color(0xFF1B140F)
         : const Color(0xFF5B3D2E);
     final Color textColor = isDark ? const Color(0xFFF3E8D3) : Colors.white;
+
     final LinearGradient appBarGradient = isDark
         ? const LinearGradient(
             begin: Alignment.centerRight,
@@ -190,19 +221,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  _isListening ? Icons.mic : Icons.mic_none,
-                  color: _isListening ? const Color(0xFFF6C76A) : textColor,
-                ),
-                onPressed: _listen,
-              ),
-              IconButton(
-                icon: Icon(Icons.brightness_6, color: textColor),
-                onPressed: widget.toggleTheme,
-              ),
-            ],
+            actions: [],
             shape: const Border(
               bottom: BorderSide(color: Color(0xFFB98A2D), width: 1.2),
             ),
@@ -213,28 +232,114 @@ class _SahabaGalleryState extends State<SahabaGallery> {
             drawerTitleSize,
             drawerSectionSize,
           ),
-          body: Stack(
+          body: Column(
             children: [
-              PageView(
-                controller: _mainPageController,
-                scrollDirection: Axis.horizontal,
-                children: [
-                  const ProphetBiographyScreen(),
-                  _buildSahabaGrid(isDark),
-                  const RawdahInfoScreen(),
-                  const AhadithScreen(),
-                  const TasbihScreen(),
-                  const GhazawatTreeScreen(),
-                  const MadinahLandmarksScreen(),
-                ],
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: _buildFloatingIndicator(activePageIndex, isDark),
+              _buildTopQuickNavBar(activePageIndex, isDark),
+              Expanded(
+                child: Stack(
+                  children: [
+                    PageView(
+                      controller: _mainPageController,
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        const ProphetBiographyScreen(),
+                        _buildSahabaGrid(isDark),
+                        const RawdahInfoScreen(),
+                        const AhadithScreen(),
+                        const DuaaOccasionsScreen(),
+                        const TasbihScreen(),
+                        const GhazawatTreeScreen(),
+                        const MadinahLandmarksScreen(),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: _buildFloatingIndicator(activePageIndex, isDark),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Quick Top Navigation Bar (شريط الوصول والتنقل السريع)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _buildTopQuickNavBar(int activeIndex, bool isDark) {
+    return Container(
+      height: 46,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1B140F) : const Color(0xFF563E32),
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        physics: const BouncingScrollPhysics(),
+        indicatorColor: const Color(0xFFD4AF37),
+        indicatorWeight: 3.2,
+        indicatorPadding: const EdgeInsets.symmetric(horizontal: 4),
+        labelColor: const Color(0xFFD4AF37),
+        unselectedLabelColor: const Color(0xFFF6EAD2),
+        labelStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+        dividerColor: Colors.transparent,
+        tabs: _pageNavItems.map((item) {
+          return Tab(
+            height: 42,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(item['icon'] as IconData, size: 16),
+                const SizedBox(width: 6),
+                Text(item['title'] as String),
+                if (item['isNew'] == true) ...[
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'جديد',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }).toList(),
+        onTap: (index) {
+          _animateToPage(index);
+        },
       ),
     );
   }
@@ -295,16 +400,16 @@ class _SahabaGalleryState extends State<SahabaGallery> {
                       ),
                     ),
                     const Text(
-                      "تطبيق الروضة",
+                      "تطبيق الروضه",
                       style: TextStyle(
                         color: Color(0xFFE6D5B8),
-                        fontSize: 26,
+                        fontSize: 24,
                         fontFamily: 'Amiri',
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const Text(
-                      "رفيقك في رحاب السيرة والذكر",
+                      "الموسوعة النبوية الشاملة - السيرة، الأحاديث، والذكر",
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 11,
@@ -315,7 +420,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
                 ),
               ),
             ),
-            _buildDrawerSectionTitle("الأقسام التعليمية", sectionSize, isDark),
+            _buildDrawerSectionTitle("الأقسام العلمية", sectionSize, isDark),
             _buildDrawerItem(
               icon: Icons.account_circle_outlined,
               title: "سيرة النبي ﷺ",
@@ -325,7 +430,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
             ),
             _buildDrawerItem(
               icon: Icons.emoji_events_outlined,
-              title: "العشرة المبشرون",
+              title: "العشرة المبشرون بالجنة",
               onTap: () => _goToPage(1),
               isDark: isDark,
               titleFontSize: titleSize,
@@ -339,30 +444,38 @@ class _SahabaGalleryState extends State<SahabaGallery> {
             ),
             _buildDrawerItem(
               icon: Icons.menu_book_rounded,
-              title: "أحاديث الروضة",
+              title: "الأحاديث النبوية الشريفة",
               onTap: () => _goToPage(3),
+              isDark: isDark,
+              titleFontSize: titleSize,
+            ),
+            _buildDrawerItem(
+              icon: Icons.auto_awesome,
+              title: "أدعية القرآن والمناسبات",
+              badgeText: "جديد",
+              onTap: () => _goToPage(4),
               isDark: isDark,
               titleFontSize: titleSize,
             ),
             _buildDrawerSectionTitle("العبادات والمعالم", sectionSize, isDark),
             _buildDrawerItem(
               icon: Icons.self_improvement,
-              title: "المسبحة الذكية",
-              onTap: () => _goToPage(4),
-              isDark: isDark,
-              titleFontSize: titleSize,
-            ),
-            _buildDrawerItem(
-              icon: Icons.landscape_outlined,
-              title: "شجرة الغزوات",
+              title: "المسبحة الذكية والأذكار",
               onTap: () => _goToPage(5),
               isDark: isDark,
               titleFontSize: titleSize,
             ),
             _buildDrawerItem(
-              icon: Icons.location_on_outlined,
-              title: "معالم المدينة",
+              icon: Icons.landscape_outlined,
+              title: "شجرة الغزوات والسرايا",
               onTap: () => _goToPage(6),
+              isDark: isDark,
+              titleFontSize: titleSize,
+            ),
+            _buildDrawerItem(
+              icon: Icons.location_on_outlined,
+              title: "معالم المدينة المنورة",
+              onTap: () => _goToPage(7),
               isDark: isDark,
               titleFontSize: titleSize,
             ),
@@ -370,14 +483,29 @@ class _SahabaGalleryState extends State<SahabaGallery> {
             _buildDrawerItem(
               icon: Icons.app_shortcut_rounded,
               title: "تحميل تطبيق نسك",
-              subtitle: "للحجوزات الرسمية",
+              subtitle: "للحجوزات الرسمية للروضة",
               onTap: () => NusukHelper.openNusukInStore(),
               isDark: isDark,
               iconColor: Colors.blueAccent,
             ),
             _buildDrawerItem(
+              icon: Icons.settings_rounded,
+              title: "إعدادات التطبيق والمظهر",
+              onTap: () {
+                Navigator.pop(context);
+                showAppSettingsDialog(
+                  context,
+                  onUpdated: () => setState(() {}),
+                  onToggleTheme: widget.toggleTheme,
+                  onVoiceSearch: _listen,
+                );
+              },
+              isDark: isDark,
+              titleFontSize: titleSize,
+            ),
+            _buildDrawerItem(
               icon: Icons.info_outline,
-              title: "عن التطبيق",
+              title: "عن التطبيق والرؤية",
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AboutAppScreen()),
@@ -404,11 +532,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
 
   void _goToPage(int index) {
     Navigator.pop(context);
-    _mainPageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
+    _animateToPage(index);
   }
 
   Widget _buildDrawerSectionTitle(String title, double size, bool isDark) {
@@ -429,8 +553,8 @@ class _SahabaGalleryState extends State<SahabaGallery> {
   Widget _buildFloatingIndicator(int activeIndex, bool isDark) {
     return SafeArea(
       child: Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           gradient: isDark
               ? const LinearGradient(
@@ -459,16 +583,19 @@ class _SahabaGalleryState extends State<SahabaGallery> {
           mainAxisSize: MainAxisSize.min,
           children: List.generate(
             _pageTitles.length,
-            (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              margin: const EdgeInsets.symmetric(horizontal: 5),
-              width: activeIndex == index ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: activeIndex == index
-                    ? const Color(0xFFD4AF37)
-                    : (isDark ? Colors.white30 : Colors.white54),
-                borderRadius: BorderRadius.circular(10),
+            (index) => InkWell(
+              onTap: () => _animateToPage(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: activeIndex == index ? 22 : 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: activeIndex == index
+                      ? const Color(0xFFD4AF37)
+                      : (isDark ? Colors.white30 : Colors.white54),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
@@ -487,92 +614,83 @@ class _SahabaGalleryState extends State<SahabaGallery> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
                 gradient: isDark
                     ? const LinearGradient(
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
-                        colors: [
-                          Color(0xFF201710),
-                          Color(0xFF382B21),
-                          Color(0xFF1A120F),
-                        ],
+                        colors: [Color(0xFF1D1713), Color(0xFF2E201B)],
                       )
                     : const LinearGradient(
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
-                        colors: [
-                          Color(0xFF7A5644),
-                          Color(0xFF5D3F32),
-                          Color(0xFF3E2B24),
-                        ],
+                        colors: [Color(0xFFFCF4E7), Color(0xFFF0E0B2)],
                       ),
-                borderRadius: BorderRadius.circular(28),
                 border: Border.all(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.38),
-                  width: 1.2,
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+                  width: 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.10),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
                       gradient: AppConstants.goldGradient,
-                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFFD4AF37,
-                          ).withValues(alpha: 0.28),
-                          blurRadius: 12,
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.18),
+                          blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.mosque_rounded,
-                      color: Colors.white,
-                      size: 26,
+                    child: const ShineEffect(
+                      child: Icon(
+                        Icons.stars_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'موسوعة الروضة',
-                          textAlign: TextAlign.right,
+                          'العشرة المبشرون بالجنة',
                           style: TextStyle(
                             fontFamily: 'Amiri',
-                            fontSize: 24,
+                            fontSize: 21,
+                            height: 1.1,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFFFFFF),
+                            color: isDark ? const Color(0xFFE8D8BD) : const Color(0xFF3E2723),
                           ),
                         ),
-                        const SizedBox(height: 4),
                         Text(
-                          'رحلةٌ نبويّة في السيرة، الآثار، والزيارات',
-                          textAlign: TextAlign.right,
+                          'سِيَرٌ عطرة لأعظم صحابة رسول الله ﷺ',
                           style: TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 12,
-                            height: 1.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFF7F1E5),
+                            fontSize: 10.5,
+                            color: (isDark ? const Color(0xFFE8D8BD) : const Color(0xFF3E2723)).withValues(alpha: 0.65),
                           ),
                         ),
                       ],
@@ -584,11 +702,11 @@ class _SahabaGalleryState extends State<SahabaGallery> {
           ),
           Expanded(
             child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
                 childAspectRatio: 0.86,
               ),
               itemCount: AppConstants.sahabaData.length,
@@ -605,6 +723,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
     required IconData icon,
     required String title,
     String? subtitle,
+    String? badgeText,
     required VoidCallback onTap,
     required bool isDark,
     Color? iconColor,
@@ -617,14 +736,37 @@ class _SahabaGalleryState extends State<SahabaGallery> {
         color: iconColor ?? const Color(0xFFD4AF37),
         size: 22,
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.w800,
-          fontSize: titleFontSize,
-          color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF2F201B),
-        ),
+      title: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.w800,
+              fontSize: titleFontSize,
+              color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF2F201B),
+            ),
+          ),
+          if (badgeText != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                badgeText,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       subtitle: subtitle != null
           ? Text(
@@ -650,8 +792,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
 
   Widget _buildFancyCard(Map<String, dynamic> item, bool isDark) {
     return ShineEffect(
-      enabled:
-          int.parse(item['id']) <= 2, // Only shine first two for performance
+      enabled: int.parse(item['id']) <= 2,
       child: InkWell(
         onTap: () => _navigateToSahabi(item),
         borderRadius: BorderRadius.circular(22),
@@ -717,10 +858,10 @@ class _SahabaGalleryState extends State<SahabaGallery> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 5,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.28),
+                          color: Colors.black.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -739,7 +880,7 @@ class _SahabaGalleryState extends State<SahabaGallery> {
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   gradient: AppConstants.brownGradient,
                   border: Border(

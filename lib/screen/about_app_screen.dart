@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rawdah/constants.dart';
 import 'package:rawdah/utils/effects.dart';
 import 'package:rawdah/utils/painters.dart';
+import 'package:rawdah/utils/settings_helper.dart';
 
 class AboutAppScreen extends StatefulWidget {
   const AboutAppScreen({super.key});
@@ -12,7 +13,7 @@ class AboutAppScreen extends StatefulWidget {
 
 class _AboutAppScreenState extends State<AboutAppScreen> {
   final ScrollController _scrollController = ScrollController();
-  double _fontSize = 14.0;
+  double _fontSize = 18.0;
 
   static const Color primaryGold = Color(0xFFD4AF37);
   static const Color darkBackground = Color(0xFF1A130F);
@@ -20,6 +21,21 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
   static const Color lightBackground = Color(0xFFF7F3E9);
   static const Color lightText = Color(0xFF3E2723);
   static const Color darkText = Color(0xFFE6D5B8);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFontSettings();
+  }
+
+  Future<void> _loadFontSettings() async {
+    final sizes = await AppSettings.loadFontSizes();
+    if (mounted) {
+      setState(() {
+        _fontSize = sizes['body'] ?? 16.0;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -77,8 +93,17 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
                             _buildSection(
                               title: "رؤية تطبيق الروضة",
                               content:
-                                  "تطبيق 'الروضة' هو مبادرة تقنية تهدف إلى تقديم محتوى إسلامي موثق وشامل حول السيرة النبوية الشريفة ومعالم المدينة المنورة. صُمم التطبيق ليكون مرجعاً ميسراً للزوار والمحبين، يجمع بين عبق التاريخ الإسلامي وسهولة الاستخدام الحديثة.",
+                                  "تطبيق 'الروضة' هو مبادرة تقنية تهدف إلى تقديم محتوى إسلامي موثق وشامل حول السيرة النبوية الشريفة ومعالم المدينة المنورة والروضة الشريفة. صُمم التطبيق ليكون مرجعاً ميسراً للزوار والمحبين، يجمع بين عبق التاريخ الإسلامي وسهولة الاستخدام الحديثة.",
                               icon: Icons.auto_awesome_outlined,
+                              textColor: textColor,
+                              isDark: isDark,
+                              fontSize: _fontSize,
+                            ),
+                            _buildSection(
+                              title: "التحديثات والإضافات الأخيرة (الإصدار 1.0.7)",
+                              content:
+                                  "• إضافة أدعية القرآن الكريم الكبرى وأذكار المناسبات (جديد).\n• إضافة حديث أذكار النوم والتوكل للبراء بن عازب رضي الله عنه مع الشرح (جديد).\n• نظام التحكم المركزي بأحجام الخطوط (العناوين الرئيسية بحد أقصى 22، الفرعية 18، والمواضيع 16 بفارق 2) (جديد).\n• شريط التلفل والتصفح السريع للوصول الفوري لجميع أقسام التطبيق (جديد).\n• تحسين أداء المسبحة الإلكترونية الذكية ودعم التفاف النصوص بالكامل.",
+                              icon: Icons.fiber_new_rounded,
                               textColor: textColor,
                               isDark: isDark,
                               fontSize: _fontSize,
@@ -141,26 +166,6 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
           ),
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.text_increase),
-          tooltip: 'تكبير الخط',
-          onPressed: () {
-            setState(() {
-              if (_fontSize < 24) _fontSize += 2;
-            });
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.text_decrease),
-          tooltip: 'تصغير الخط',
-          onPressed: () {
-            setState(() {
-              if (_fontSize > 10) _fontSize -= 2;
-            });
-          },
-        ),
-      ],
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -184,33 +189,30 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
   Widget _buildAppIdentity(BuildContext context, bool isDark, Color textColor) {
     return Column(
       children: [
-        const SizedBox(height: 8),
-        ShineEffect(
+        Hero(
+          tag: 'app_logo',
           child: Container(
-            width: 120,
-            height: 120,
+            width: 95,
+            height: 95,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
               gradient: AppConstants.goldGradient,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 2,
-              ),
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: primaryGold.withValues(alpha: 0.2),
-                  blurRadius: 25,
+                  color: primaryGold.withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: const Center(
-              child: Icon(Icons.mosque_outlined, size: 65, color: Colors.white),
+              child: Icon(Icons.mosque_outlined, size: 55, color: Colors.white),
             ),
           ),
         ),
         const SizedBox(height: 16),
         Text(
-          "تطبيق الروضة",
+          "تطبيق الروضة الشريفة",
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Amiri',
@@ -227,9 +229,9 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: primaryGold.withValues(alpha: 0.25)),
           ),
-          child: const Text(
-            "الإصدار 1.0.6",
-            style: TextStyle(
+          child: Text(
+            "الإصدار ${AppConstants.appVersion} (محدث)",
+            style: const TextStyle(
               fontFamily: 'Cairo',
               fontSize: 12,
               color: primaryGold,
@@ -285,13 +287,15 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
                   child: Icon(icon, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: primaryGold,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Amiri',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: primaryGold,
+                    ),
                   ),
                 ),
               ],
@@ -322,6 +326,24 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
     bool isDark,
   ) {
     final features = [
+      {
+        'title': 'أدعية القرآن وأذكار المناسبات (جديد)',
+        'desc':
+            'قسم خاص يضم أدعية خليل الرحمن، شكر النعم، الذرية والوالدين، وأدعية السفر والهم والكرب.',
+        'icon': Icons.auto_awesome,
+      },
+      {
+        'title': 'أذكار النوم النبوية (جديد)',
+        'desc':
+            'حديث البراء بن عازب الشريف في أذكار النوم والوضوء والتوكل والتسليم الكامل لله تعالى.',
+        'icon': Icons.nightlight_round,
+      },
+      {
+        'title': 'التحكم المركزي بأحجام الخطوط (جديد)',
+        'desc':
+            'إمكانية تعديل حجم الخطوط بدقة عبر نافذة الإعدادات (العناوين الرئيسية بحد أقصى 22، الفرعية 18، والمواضيع 16 بفارق 2).',
+        'icon': Icons.settings_rounded,
+      },
       {
         'title': 'السيرة النبوية العطرة',
         'desc':
@@ -454,39 +476,34 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('📱', 'تحديث', 'دوري', textColor),
-          _buildStatItem('🎯', 'الهدف', 'نشر العلم', textColor),
-          _buildStatItem('⭐', 'التقييم', 'ممتاز', textColor),
+          _buildStatItem('10+', 'صحابي جليل', Icons.people_outline),
+          _buildStatItem('15+', 'حديث شريف', Icons.menu_book),
+          _buildStatItem('5+', 'غزوات كبرى', Icons.shield_outlined),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(
-    String emoji,
-    String label,
-    String value,
-    Color textColor,
-  ) {
+  Widget _buildStatItem(String count, String label, IconData icon) {
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 22)),
+        Icon(icon, color: primaryGold, size: 24),
         const SizedBox(height: 6),
         Text(
-          label,
-          style: TextStyle(
+          count,
+          style: const TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 11,
-            color: textColor.withValues(alpha: 0.6),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: primaryGold,
           ),
         ),
         Text(
-          value,
+          label,
           style: const TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: primaryGold,
+            fontSize: 10,
+            color: Colors.grey,
           ),
         ),
       ],
@@ -496,25 +513,23 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
   Widget _buildFooter(Color textColor) {
     return Column(
       children: [
-        const Divider(color: primaryGold, thickness: 0.5),
-        const SizedBox(height: 10),
         Text(
-          "تم تطوير هذا التطبيق لخدمة الإسلام ونشر المعرفة النبوية",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 11,
-            color: textColor.withValues(alpha: 0.5),
-          ),
+      "تصميم وتطوير: ${AppConstants.developerName}",
+      style: TextStyle(
+        fontFamily: 'Cairo',
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: textColor.withValues(alpha: 0.8),
+      ),
         ),
+        const SizedBox(height: 4),
         const Text(
-          "جميع الحقوق محفوظة © 2024",
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 12,
-            color: primaryGold,
-            fontWeight: FontWeight.bold,
-          ),
+      "جميع الحقوق محفوظة © شركة كالك",
+      style: TextStyle(
+        fontFamily: 'Cairo',
+        fontSize: 10,
+        color: Colors.grey,
+      ),
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rawdah/constants.dart';
 import 'package:rawdah/utils/effects.dart';
+import 'package:rawdah/utils/settings_helper.dart';
 
 class MadinahLandmarksScreen extends StatefulWidget {
   const MadinahLandmarksScreen({super.key});
@@ -15,6 +16,23 @@ class _MadinahLandmarksScreenState extends State<MadinahLandmarksScreen> {
     _landmarks.length,
     (_) => GlobalKey(),
   );
+
+  double _fontSize = 13.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFontSettings();
+  }
+
+  Future<void> _loadFontSettings() async {
+    final sizes = await AppSettings.loadFontSizes();
+    if (mounted) {
+      setState(() {
+        _fontSize = sizes['body'] ?? 14.0;
+      });
+    }
+  }
 
   static const List<Map<String, dynamic>> _landmarks = [
     {
@@ -104,7 +122,7 @@ class _MadinahLandmarksScreenState extends State<MadinahLandmarksScreen> {
     {
       'title': 'بئر عثمان (بئر رومة)',
       'description':
-          'بئر تاريخية اشترى عثمان بن عفان رضي الله عنه ثم جعله في خدمة المسلمين، وهي اشتهرت بفضلها وذكرها في المدينة المنورة.',
+          'بئر تاريخية اشترى عثمان بن عفان رضي الله عنه ثم جعلها في خدمة المسلمين، وهي اشتهرت بفضلها وذكرها في المدينة المنورة.',
       'route':
           'تتوفر وسائل النقل نحو المنطقة بسهولة، ويُفضل طلب توجيه محلي إذا كان الهدف زيارة الموقع بدقة خلال جولة المدينة.',
       'hadith':
@@ -134,217 +152,214 @@ class _MadinahLandmarksScreenState extends State<MadinahLandmarksScreen> {
         ? AppConstants.textLight
         : AppConstants.textDark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppConstants.darkBackground
-          : AppConstants.lightBackground,
-      appBar: AppBar(
-        title: const ShineEffect(
-          child: Text(
-            'معالم المدينة المنورة',
-            style: TextStyle(
-              fontFamily: AppConstants.arabicFont,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
         backgroundColor: isDark
-            ? const Color(0xFF1A1A1A)
-            : AppConstants.brownDark,
-        foregroundColor: AppConstants.textLight,
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? AppConstants.darkBackgroundGradient
-              : AppConstants.lightBackgroundGradient,
-        ),
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  ..._landmarks.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final landmark = entry.value;
+            ? AppConstants.darkBackground
+            : AppConstants.lightBackground,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? AppConstants.darkBackgroundGradient
+                : AppConstants.lightBackgroundGradient,
+          ),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 90),
+                child: Column(
+                  children: [
+                    ..._landmarks.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final landmark = entry.value;
 
-                    return ShineEffect(
-                      enabled: index == 0,
-                      child: Container(
-                        key: _landmarkKeys[index],
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          gradient: isDark
-                              ? const LinearGradient(
-                                  begin: Alignment.topRight,
-                                  end: Alignment.bottomLeft,
-                                  colors: [
-                                    Color(0xFF2A1D17),
-                                    Color(0xFF17120F),
-                                  ],
-                                )
-                              : const LinearGradient(
-                                  begin: Alignment.topRight,
-                                  end: Alignment.bottomLeft,
-                                  colors: [
-                                    Color(0xFFFFFBF5),
-                                    Color(0xFFF0E0AF),
-                                  ],
+                      return ShineEffect(
+                        enabled: index == 0,
+                        child: Container(
+                          key: _landmarkKeys[index],
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            gradient: isDark
+                                ? AppConstants.brownGradient
+                                : const LinearGradient(
+                                    begin: Alignment.topRight,
+                                    end: Alignment.bottomLeft,
+                                    colors: [
+                                      Color(0xFFFFFDF8),
+                                      Color(0xFFF6ECD7),
+                                    ],
+                                  ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppConstants.primaryGold.withValues(
+                                alpha: 0.28,
+                              ),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.15 : 0.05,
                                 ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppConstants.primaryGold.withValues(
-                              alpha: 0.32,
+                                blurRadius: 14,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    gradient: AppConstants.goldGradient,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppConstants.primaryGold
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    landmark['icon'],
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        landmark['title'],
+                                        style: const TextStyle(
+                                          fontFamily: AppConstants.arabicFont,
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppConstants.primaryGold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        landmark['description'],
+                                        style: TextStyle(
+                                          fontFamily: AppConstants.secondaryFont,
+                                          fontSize: _fontSize,
+                                          height: 1.75,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark
+                                              ? const Color(0xFFF3E5C5)
+                                              : textColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildInfoRow(
+                                        'طرق الوصول',
+                                        landmark['route'],
+                                        isDark,
+                                        textColor,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      _buildInfoRow(
+                                        'الحديث/الفضل',
+                                        landmark['hadith'],
+                                        isDark,
+                                        textColor,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      _buildInfoRow(
+                                        'الفائدة',
+                                        landmark['benefit'],
+                                        isDark,
+                                        textColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppConstants.primaryGold.withValues(
-                                alpha: isDark ? 0.10 : 0.12,
-                              ),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  gradient: AppConstants.goldGradient,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  landmark['icon'],
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
+                      );
+                    }),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: isDark
+                            ? const LinearGradient(
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                                colors: [Color(0xFF1A140F), Color(0xFF2B2018)],
+                              )
+                            : const LinearGradient(
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                                colors: [Color(0xFFFDF7EE), Color(0xFFE7D29A)],
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      landmark['title'],
-                                      style: const TextStyle(
-                                        fontFamily: AppConstants.arabicFont,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppConstants.primaryGold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      landmark['description'],
-                                      style: TextStyle(
-                                        fontFamily: AppConstants.secondaryFont,
-                                        fontSize: 13,
-                                        height: 1.8,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark
-                                            ? const Color(0xFFF3E5C5)
-                                            : textColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _buildInfoRow(
-                                      'طرق الوصول',
-                                      landmark['route'],
-                                      isDark,
-                                      textColor,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildInfoRow(
-                                      'الحديث/الفضل',
-                                      landmark['hadith'],
-                                      isDark,
-                                      textColor,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildInfoRow(
-                                      'الفائدة',
-                                      landmark['benefit'],
-                                      isDark,
-                                      textColor,
-                                    ),
-                                  ],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppConstants.primaryGold.withValues(alpha: 0.4),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lightbulb_outline,
+                                color: AppConstants.primaryGold,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'نصيحة للزائر',
+                                style: TextStyle(
+                                  fontFamily: AppConstants.arabicFont,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.primaryGold,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: isDark
-                          ? const LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              colors: [Color(0xFF1A140F), Color(0xFF2B2018)],
-                            )
-                          : const LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              colors: [Color(0xFFFDF7EE), Color(0xFFE7D29A)],
+                          const SizedBox(height: 8),
+                          Text(
+                            'أخي الزائر، احرص على السكينة والوقار في هذه البقاع الطاهرة، واستغل كل لحظة في الذكر والدعاء.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AppConstants.secondaryFont,
+                              fontSize: 14,
+                              height: 1.6,
+                              color: textColor,
                             ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: AppConstants.primaryGold.withValues(alpha: 0.5),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.lightbulb_outline,
-                              color: AppConstants.primaryGold,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'نصيحة للزائر',
-                              style: TextStyle(
-                                fontFamily: AppConstants.arabicFont,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.primaryGold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'أخي الزائر، احرص على السكينة والوقار في هذه البقاع الطاهرة، واستغل كل لحظة في الذكر والدعاء.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: AppConstants.secondaryFont,
-                            fontSize: 15,
-                            height: 1.6,
-                            color: textColor,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -358,14 +373,14 @@ class _MadinahLandmarksScreenState extends State<MadinahLandmarksScreen> {
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.white.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.70),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppConstants.primaryGold.withValues(alpha: 0.22),
+          color: AppConstants.primaryGold.withValues(alpha: 0.18),
         ),
       ),
       child: Column(
@@ -375,19 +390,19 @@ class _MadinahLandmarksScreenState extends State<MadinahLandmarksScreen> {
             label,
             style: const TextStyle(
               fontFamily: AppConstants.arabicFont,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.bold,
               color: AppConstants.primaryGold,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             content,
             style: TextStyle(
               fontFamily: AppConstants.secondaryFont,
-              fontSize: 12.5,
-              height: 1.8,
-              fontWeight: FontWeight.w700,
+              fontSize: _fontSize,
+              height: 1.7,
+              fontWeight: FontWeight.w600,
               color: isDark ? const Color(0xFFF2E2BC) : textColor,
             ),
           ),

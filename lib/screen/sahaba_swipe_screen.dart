@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:rawdah/constants.dart';
 import 'package:rawdah/error_handler.dart';
 import 'package:rawdah/utils/effects.dart';
+import 'package:rawdah/utils/settings_helper.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SahabaSwipeScreen extends StatefulWidget {
@@ -34,6 +35,16 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
     super.initState();
     _currentIndex = widget.initialIndex - 1;
     _pageController = PageController(initialPage: _currentIndex);
+    _loadFontSettings();
+  }
+
+  Future<void> _loadFontSettings() async {
+    final sizes = await AppSettings.loadFontSizes();
+    if (mounted) {
+      setState(() {
+        _fontSize = sizes['body'] ?? 16.0;
+      });
+    }
   }
 
   Future<void> _shareSahabi(BuildContext context) async {
@@ -115,30 +126,6 @@ class _SahabaSwipeScreenState extends State<SahabaSwipeScreen> {
                         fontSize: 18,
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.text_increase,
-                      size: 18,
-                      color: AppConstants.primaryGold,
-                    ),
-                    onPressed: () {
-                      setDialogState(() => _fontSize += 2);
-                      setState(() {});
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.text_decrease,
-                      size: 18,
-                      color: AppConstants.primaryGold,
-                    ),
-                    onPressed: () {
-                      if (_fontSize > 10) {
-                        setDialogState(() => _fontSize -= 2);
-                        setState(() {});
-                      }
-                    },
                   ),
                 ],
               ),
